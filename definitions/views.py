@@ -24,7 +24,7 @@ SUGGESTED_CARDS = 5
 def add_card(request):
     """Add a new concept"""
     context = {
-        'courses': Course.objects.all(),
+        'courses': Course.objects.all().order_by('name'),
         'concept_types': Concept.TYPE_OF_CARD,
         'ckeditor_config': json.dumps(settings.CKEDITOR_CONFIGS['default']),
     }
