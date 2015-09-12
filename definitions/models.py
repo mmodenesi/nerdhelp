@@ -48,7 +48,7 @@ class Concept(models.Model):
     definition = models.TextField()
     course = models.ForeignKey(Course)
     tags = models.ManyToManyField(Tag)
-    learning_coeff = models.FloatField(editable=False, default=0.0)
+    learning_coeff = models.FloatField(editable=False, default=-5.0)
     concept_type = models.CharField(max_length=1,
                                     choices=TYPE_OF_CARD,
                                     default=DEFINITION)
