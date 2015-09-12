@@ -5,7 +5,6 @@ Views for app definitions
 # python imports
 import random
 import json
-from datetime import datetime, timedelta
 
 # django imports
 from django.http import HttpResponse
@@ -36,7 +35,8 @@ def view_card(request, card_id):
     card = get_object_or_404(Concept, pk=card_id)
     context = {
         'card': card,
-        'suggested_cards': Concept.objects.filter(course=card.course).order_by('learning_coeff')[:SUGGESTED_CARDS],
+        'suggested_cards': Concept.objects.filter(course=card.course).exclude(
+            id=card.id).order_by('learning_coeff')[:SUGGESTED_CARDS],
         'courses': Course.objects.all().exclude(id=card.course.id),
     }
 
@@ -83,20 +83,11 @@ def save_card(request):
 def random_card(request):
     """Show random concept"""
 
-    def latest_rank(concept):
-        """return datetime of last ranking"""
-        try:
-            return concept.reactions.all().order_by('-created')[0].created
-        except IndexError:
-            return datetime.now() - timedelta(days=10000)
-
     course_id = request.GET.get('c', None)
     if course_id:
         concepts = Concept.objects.filter(course__id=int(course_id))
     else:
         concepts = Concept.objects.all()
-
-    concepts = sorted(concepts, key=latest_rank, reverse=True)
 
     try:
         card = random.choice(concepts[1:])

@@ -8,12 +8,11 @@ from django.contrib import admin
 from definitions.models import Concept
 from definitions.models import Course
 from definitions.models import Tag
-from definitions.models import Reaction
 
 class ConceptAdmin(admin.ModelAdmin):
     """ModelAdmin for Concept"""
     list_display = ('name', 'concept_type', 'learning_coeff')
-    list_filter = ('concept_type', )
+    list_filter = ('concept_type', 'course')
     fields = ['concept_type', 'course', 'name', 'definition']
 
 
