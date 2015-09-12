@@ -1,0 +1,107 @@
+{% extends 'definitions/base.html' %}
+
+{% block title %}{{ card.name }}{% endblock %}
+
+{% block content %}
+
+
+<div class="col-sm-9 col-sm-offset-3 col-md-9 col-md-offset-2 main">
+  <form>
+          {% csrf_token %}
+
+
+    <!-- COURSE -->
+    <div class="form-group">
+      <label for="course_select">Curso</label>
+      <select class="form-control" id="course_select">
+        {% for course in courses %}
+            <option {% if course == card.course %}selected="selected"{% endif %}>{{ course }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- TYPE -->
+    <div class="form-group">
+      <label for="type_select">Tipo</label>
+      <select class="form-control" id="type_select">
+        {% for type in concept_types %}
+        <option {% if type.0 == card.concept_type %}selected="selected"{% endif %} value="{{ type.0 }}">{{ type.1 }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- TITLE -->
+    <div class="form-group">
+      <label for="title_input">Título</label>
+      <input type="text" class="form-control" id="title_input" placeholder="Título" value="{{ card.name }}">
+    </div>
+
+
+    <!-- DEFINITION -->
+    <div class="form-group">
+        <label for="concept_textarea">Definición</label>
+        <br>
+        <div class="django-ckeditor-widget" data-field-id="id_concept" style="display: inline-block;">
+            <textarea id="id_concept" name="Definición" data-processed="0" data-external-plugin-resources='[mathjax]' data-id="id_concept" data-type="ckeditortype" data-config="">
+            {{ card.definition }}
+            </textarea>
+        </div>
+    </div>
+
+  </form>
+    <div style="float: right;">
+      <button class="btn btn-default btn-success" id="btn_save">Guardar</button>
+      <button class="btn btn-default btn-success" id="btn_save_and_continue">Guardar y continuar editando</button>
+      <button class="btn btn-default btn-danger" id="btn_discard">Cancelar</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    {% load staticfiles %}
+    <script type="text/javascript" src="{% static 'ckeditor/ckeditor/ckeditor.js' %}"></script>
+    <script type="text/javascript" src="{% static 'ckeditor/ckeditor-init.js' %}"></script>
+    <script type="text/javascript">
+
+        function post_data(callback) {
+
+            data = {
+                {% if card %}
+                    card_id: {{ card.id }},
+                {% endif %}
+                course_name: $('#course_select').val(),
+                concept_type: $('#type_select').val(),
+                title: $('#title_input').val(),
+                definition: CKEDITOR.instances['id_concept'].getData(),
+            }
+
+            return ajaxPost("{% url 'save_card' %}", data, function(content) {
+                if (content.status == 200 && content.statusText == 'OK') {
+                    return callback(content);
+                }
+            });
+        }
+
+        $('#btn_save').click( function() {
+                post_data(function(c) {
+                    window.location = "{% url 'home' %}";
+                    window.location = "/concepts/card/" + c.card_id;
+                });
+        });
+
+        $('#btn_save_and_continue').click( function() {
+                {% if not card %}
+                    {# we are creating a new card #}
+                    post_data(function(c){
+                        window.location = "/concepts/card/edit/" + c.card_id;
+                    });
+                {% else %}
+                    post_data(function(c){});
+                {% endif %}
+        });
+
+        $('#btn_discard').click( function() {
+            window.location = "{% url 'home' %}";
+        });
+    </script>
+{% endblock %}

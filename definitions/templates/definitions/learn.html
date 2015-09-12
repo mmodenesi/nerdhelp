@@ -1,0 +1,75 @@
+{% extends 'definitions/base.html' %}
+
+{% block title %}{{ card.name }}{% endblock %}
+
+{% block content %}
+<div class="col-sm-9 col-sm-offset-3 col-md-9 col-md-offset-2 main">
+  <h1 class="page-header" title="{{ card.name }}">
+      {{ card.name|truncatechars:50 }}
+      <a href="{% url 'edit_card' card.id %}">
+      <button id="edit" type="button" class="btn btn-default" style="float: right;" aria-label="Right Align">
+        <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
+      </button>
+    </a>
+    <button id="show_def" type="button" class="btn btn-default" style="float: right;" aria-label="Right Align">
+      <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+    </button>
+  </h1>
+  <div id="data">
+  </div>
+  <div style="float: right">
+      <button type="button" class="btn btn-success rank-btn" style="float: center;" id="rank-up" aria-label="Right Align">
+        <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
+      </button>
+      <button type="button" class="btn btn-danger rank-btn" style="float: center;" id="rank-down">
+        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+      </button>
+  </div>
+<div>
+{% endblock %}
+
+
+{% block scripts %}
+  <script type="text/javascript">
+      $('.rank-btn').hide()
+      $('#edit').hide()
+      $('#show_def').click(function() {
+
+          // remove button to show definition
+          $('#show_def').remove();
+
+          // show card data
+          {% autoescape off %}
+          $("#data").append("{{ card.clean_definition }}");
+          {% endautoescape %}
+
+          // style up card
+          $('#def').addClass('def');
+
+          // Typeset math
+          MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
+
+          // show buttons
+          $('.rank-btn').show()
+          $('#edit').show()
+      });
+
+      $('#rank-up').click(function() {
+          $.ajax({
+            url: "/concepts/rank-up/{{ card.id }}/",
+          }).done(function() {
+            location.href =  "{% url 'random_card' %}?c={{ card.course.id }}";
+          });
+      });
+      $('#rank-down').click(function() {
+          $.ajax({
+            url: "/concepts/rank-down/{{ card.id }}/",
+          }).done(function() {
+              location.href =  "{% url 'random_card' %}?c={{ card.course.id }}";
+          });
+      });
+  </script>
+
+  {% load mathjax %}
+  {% mathjax_scripts %}
+{% endblock %}
