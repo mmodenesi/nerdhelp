@@ -5,12 +5,22 @@ Models for app definitions
 
 from django.db import models
 
+DESIRED_LEARNING_COEFF = 10.0
+
 
 class Course(models.Model):
     """
     Course where you learn a Concept
     """
     name = models.CharField(max_length=100)
+
+    def progress(self):
+        """Return estimative progress with this course cards"""
+
+        # get all cards
+        cards = Concept.objects.filter(course=self)
+        percentages = sum([c.progress() for c in cards])
+        return percentages / len(cards)
 
     def __unicode__(self):
         """..."""
@@ -48,7 +58,7 @@ class Concept(models.Model):
     definition = models.TextField()
     course = models.ForeignKey(Course)
     tags = models.ManyToManyField(Tag)
-    learning_coeff = models.FloatField(editable=False, default=-5.0)
+    learning_coeff = models.FloatField(editable=False, default=0.0)
     concept_type = models.CharField(max_length=1,
                                     choices=TYPE_OF_CARD,
                                     default=DEFINITION)
@@ -70,6 +80,11 @@ class Concept(models.Model):
         result = result.replace('\\', '\\\\')
         result = result.replace('"', r'\"')
         return result
+
+    def progress(self):
+        """Return progress in learning this card"""
+        perc = self.learning_coeff / DESIRED_LEARNING_COEFF * 100
+        return max(min(perc, 100.0), 0.0)
 
 
 class Reaction(models.Model):

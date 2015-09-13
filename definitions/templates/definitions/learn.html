@@ -4,6 +4,13 @@
 
 {% block content %}
 <div class="col-sm-9 col-sm-offset-3 col-md-9 col-md-offset-2 main">
+      {% if progress != None %}
+        <div class="progress">
+          <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ progress|stringformat:'f' }}%">
+            {{ progress|stringformat:'.1f' }}%
+          </div>
+        </div>
+      {% endif %}
   <h1 class="page-header" title="{{ card.name }}">
       {{ card.name|truncatechars:50 }}
       <a href="{% url 'edit_card' card.id %}">

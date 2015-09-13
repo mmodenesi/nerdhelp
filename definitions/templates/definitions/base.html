@@ -48,14 +48,14 @@
                 {% endif %} <span class="caret"></span></a>
                 <ul class="dropdown-menu">
                   {% for c in courses %}
-                    <li><a href="{% url 'random_card' %}?c={{ c.id }}">{{ c.name }}</a></li>
+                  <li><a href="{% url 'random_card' %}?c={{ c.id }}">{{ c.name }}</a></li>
                   {% endfor %}
                 </ul>
               </li>
             {% endif %}
             <li>
-              <form class="navbar-form navbar-right">
-                <input class="form-control" placeholder="Buscar..." type="text">
+              <form class="navbar-form navbar-right" action="/concepts/search/" method="get">
+                <input class="form-control" placeholder="Buscar..." type="text" name="q">
               </form>
             </li>
             <li>
