@@ -1,0 +1,30 @@
+
+{% extends 'definitions/base.html' %}
+
+{% block title %}home{% endblock %}
+
+{% block content %}
+<div class="col-sm-9 col-sm-offset-3 col-md-9 col-md-offset-2 main">
+  <h1 class="page-header">
+    Resultados de la b&uacute;squeda para "{{ query }}"
+  </h1>
+  {% for card in result %}
+  <div class="list-group">
+    <a href="{% url 'view_card' card.id %}" class="list-group-item">
+      <h4 class="list-group-item-heading">
+        {% autoescape off %}
+          {{ card.name }}
+        {% endautoescape %}
+        <span class="label {% if card.learning_coeff < 0 %}label-danger{% elif card.learning_coeff <= 3 %} label-default {% else %}label-success{% endif %}" style="float: right; font-size: 0.5em">{{ card.learning_coeff }}</span>
+      </h4>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+  {% load mathjax %}
+  {% mathjax_scripts %}
+{% endblock %}
+

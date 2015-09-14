@@ -12,7 +12,7 @@
         </div>
       {% endif %}
   <h1 class="page-header" title="{{ card.name }}">
-      {{ card.name|truncatechars:50 }}
+      {{ card.name|truncatechars:60 }}
       <a href="{% url 'edit_card' card.id %}">
       <button id="edit" type="button" class="btn btn-default" style="float: right;" aria-label="Right Align">
         <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
