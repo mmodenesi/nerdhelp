@@ -15,7 +15,7 @@
         {% autoescape off %}
           {{ card.name }}
         {% endautoescape %}
-        <span class="label {% if card.learning_coeff < 0 %}label-danger{% elif card.learning_coeff <= 3 %} label-default {% else %}label-success{% endif %}" style="float: right; font-size: 0.5em">{{ card.learning_coeff }}</span>
+        <span class="label {% if card.learning_coeff < 4 %}label-danger{% elif card.learning_coeff <= 7 %} label-default {% else %}label-success{% endif %}" style="float: right; font-size: 0.5em">{{ card.learning_coeff }}</span>
       </h4>
     </a>
   </div>

@@ -59,7 +59,7 @@
               </form>
             </li>
             <li>
-              <a href="{% url 'random_card' %}">Random</a>
+              <a href="{% url 'random_card' %}{% if card %}?c={{ card.course.id }}{% endif %}">Random</a>
             </li>
           </ul>
       </div>

@@ -107,15 +107,14 @@ def random_card(request):
 
     course_id = request.GET.get('c', None)
     if course_id:
-        concepts = Concept.objects.filter(course__id=int(course_id))
+        concepts = Concept.objects.filter(course__id=int(course_id)).order_by('learning_coeff')
     else:
-        concepts = Concept.objects.all()
+        concepts = Concept.objects.all().order_by('learning_coeff')
 
-    try:
-        card = random.choice(concepts[1:])
-    except IndexError:
-        # there's only one card
-        card = concepts[0]
+
+    concepts = concepts[:max(len(concepts)/10, 6)]
+
+    card = random.choice(concepts)
 
     return redirect('view_card', card.id)
 
@@ -125,6 +124,7 @@ def rank_up(_, concept_id):
     """
     concept = Concept.objects.get(id=concept_id)
     concept.learning_coeff += 1
+    concept.learning_coeff = min(concept.learning_coeff, 10.0)
     concept.save()
     return HttpResponse(json.dumps(dict(result='ok')),
                         content_type="application/json")
@@ -135,6 +135,7 @@ def rank_down(_, concept_id):
     """
     concept = Concept.objects.get(id=concept_id)
     concept.learning_coeff -= 1.5
+    concept.learning_coeff = max(concept.learning_coeff, 0.0)
     concept.save()
     return HttpResponse(json.dumps(dict(result='ok')),
                         content_type="application/json")
