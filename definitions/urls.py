@@ -8,10 +8,12 @@ from definitions.views import random_card
 from definitions.views import view_card, edit_card, save_card, add_card
 from definitions.views import rank_up, rank_down
 from definitions.views import home, search
+from definitions.views import view_course
 
 urlpatterns = patterns(
     '',
     url(r'^home/$', home, name='home'),
+    url(r'^course/(?P<course_id>\d+)$', view_course, name='view_course'),
     url(r'^random/$', random_card, name='random_card'),
     url(r'^search/$', search, name='search'),
     url(r'^card/(?P<card_id>\d+)$', view_card, name='view_card'),
