@@ -122,7 +122,13 @@ MATHJAX_CONFIG_DATA = {
             [
                 ['$', '$'],
                 [r'\(', r'\)'],
-            ]
+            ],
+    },
+    'TeX': {
+        'Macros': {
+            'llbracket': r'\unicode{x27E6}',
+            'rrbracket': r'\unicode{x27E7}',
+        },
     }
 }
 
