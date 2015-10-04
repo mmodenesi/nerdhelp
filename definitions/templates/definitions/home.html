@@ -3,6 +3,12 @@
 {% block title %}home{% endblock %}
 
 {% block content %}
-<p>...</p>
+<div class="col-sm-9 col-sm-offset-3 col-md-9 col-md-offset-2 main">
+    <div class="list-group">
+    {% for course in courses %}
+        <a href="{% url 'view_course' course.id %}" class="list-group-item">{{ course.name }}</a>
+    {% endfor %}
+    </div>
+</div>
 {% endblock %}
 
