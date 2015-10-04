@@ -146,6 +146,18 @@ def home(request):
     """
     context = {
         'suggested_cards': Concept.objects.all().order_by('learning_coeff')[:SUGGESTED_CARDS],
+        'courses': Course.objects.all().order_by('name'),
     }
     return render(request, 'definitions/home.html', context)
 
+
+def view_course(request, course_id):
+    """
+    Show details for this course
+    """
+    course = get_object_or_404(Course, pk=course_id)
+    context = {
+        'course': course,
+        'concepts': Concept.objects.filter(course=course).order_by('id'),
+    }
+    return render(request, 'definitions/view_course.html', context)
