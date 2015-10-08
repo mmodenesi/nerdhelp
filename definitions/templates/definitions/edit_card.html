@@ -73,7 +73,7 @@
         function post_data(callback) {
 
             data = {
-                {% if card %}
+                {% if card.id %}
                     card_id: {{ card.id }},
                 {% endif %}
                 course_name: $('#course_select').val(),

@@ -7,6 +7,7 @@ import random
 import json
 
 # django imports
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
@@ -44,7 +45,18 @@ def search(request):
 
 def add_card(request):
     """Add a new concept"""
+    if request.GET:
+        # just a hack to make the template pre-select correct
+        # course for you
+        card = {}
+        try:
+            card['course'] = Course.objects.get(id=request.GET['c'])
+        except ObjectDoesNotExist:
+            card = None
+    else:
+        card = None
     context = {
+        'card': card,
         'courses': Course.objects.all().order_by('name'),
         'concept_types': Concept.TYPE_OF_CARD,
     }
@@ -70,7 +82,7 @@ def edit_card(request, card_id):
     card = get_object_or_404(Concept, pk=card_id)
     context = {
         'card': card,
-        'courses': Course.objects.all(),
+        'courses': Course.objects.all().order_by('name'),
         'concept_types': Concept.TYPE_OF_CARD,
     }
     return render(request, 'definitions/edit_card.html', context)

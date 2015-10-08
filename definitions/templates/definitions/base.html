@@ -72,7 +72,7 @@
       <div class="row">
         <div class="col-sm-3 col-md-2 sidebar">
           <ul class="nav nav-sidebar">
-            <li><a href="{% url 'add_card' %}">Agregar Concepto</a></li>
+            <li><a href="{% url 'add_card' %}{% if card %}?c={{ card.course.id }}{% endif %}">Agregar Concepto</a></li>
             <li><a href="/admin/definitions/course/add/" target="_blank">Agregar Curso</a></li>
           </ul>
           {% if suggested_cards %}
