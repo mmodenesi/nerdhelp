@@ -90,25 +90,26 @@
         }
 
         $('#btn_save').click( function() {
-                post_data(function(c) {
-                    window.location = "{% url 'home' %}";
-                    window.location = "/concepts/card/" + c.card_id;
-                });
+            post_data(function(c) {
+                window.location = "{% url 'home' %}";
+            });
         });
 
         $('#btn_save_and_continue').click( function() {
-                {% if not card %}
-                    {# we are creating a new card #}
-                    post_data(function(c){
-                        window.location = "/concepts/card/edit/" + c.card_id;
-                    });
-                {% else %}
-                    post_data(function(c){});
-                {% endif %}
+            {% if not card.id %}
+                {# we are creating a new card #}
+                post_data(function(c){
+                    window.location = "/concepts/card/edit/" + c.card_id;
+                });
+            {% else %}
+                console.log("{{ card }}");
+                post_data(function(c){});
+            {% endif %}
         });
 
         $('#btn_discard').click( function() {
             window.location = "{% url 'home' %}";
         });
+
     </script>
 {% endblock %}
