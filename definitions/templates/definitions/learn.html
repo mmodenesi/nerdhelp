@@ -48,6 +48,11 @@
           // show card data
           {% autoescape off %}
           $("#data").append("{{ card.clean_definition }}");
+          $("#data").append("<br><hr>");
+          {% for tag in card.tags.all %}
+          $("#data").append('<span class="label label-success">{{ tag }}</span> ');
+          {% endfor %}
+
           {% endautoescape %}
 
           // style up card

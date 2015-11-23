@@ -55,6 +55,11 @@
         </div>
     </div>
 
+    <!-- TAGS -->
+    <div class="form-group">
+        <input type="text" class="form-control" id="tags_input" placeholder="Etiquetas" {% if card.tags.all %} value="{{ card.tags.all|join:',' }}"{% endif %}>
+    </div>
+
   </form>
     <div style="float: right;">
       <button class="btn btn-default btn-success" id="btn_save">Guardar</button>
@@ -68,6 +73,8 @@
     {% load staticfiles %}
     <script type="text/javascript" src="{% static 'ckeditor/ckeditor/ckeditor.js' %}"></script>
     <script type="text/javascript" src="{% static 'ckeditor/ckeditor-init.js' %}"></script>
+    <script type="text/javascript" src="{% static 'definitions/js/bootstrap-tagsinput.js' %}"></script>
+    <script type="text/javascript" src="{% static 'definitions/js/typeahead.bundle.js' %}"></script>
     <script type="text/javascript">
 
         function post_data(callback) {
@@ -80,6 +87,7 @@
                 concept_type: $('#type_select').val(),
                 title: $('#title_input').val(),
                 definition: CKEDITOR.instances['id_concept'].getData(),
+                tags: $('#tags_input').val(),
             }
 
             return ajaxPost("{% url 'save_card' %}", data, function(content) {
@@ -102,7 +110,6 @@
                     window.location = "/concepts/card/edit/" + c.card_id;
                 });
             {% else %}
-                console.log("{{ card }}");
                 post_data(function(c){});
             {% endif %}
         });
@@ -110,6 +117,45 @@
         $('#btn_discard').click( function() {
             window.location = "{% url 'home' %}";
         });
+
+        var tags_strings = [ {% for t in tags %} '{{ t.name }}', {% endfor %} ]
+
+        var substringMatcher = function(strs) {
+            return function findMatches(q, cb) {
+                var matches, substringRegex;
+
+                // an array that will be populated with substring matches
+                matches = [];
+
+                // regex used to determine if a string contains the substring `q`
+                substrRegex = new RegExp(q, 'i');
+
+                // iterate through the pool of strings and for any string that
+                // contains the substring `q`, add it to the `matches` array
+                $.each(strs, function(i, str) {
+                    if (substrRegex.test(str)) {
+                        matches.push(str);
+                    }
+                });
+
+                cb(matches);
+            };
+        };
+
+
+        $('#tags_input').tagsinput({
+            tagClass: 'label label-success',
+            typeaheadjs: {
+                name: 'tags',
+                source: substringMatcher(tags_strings),
+            }
+        });
+
+
+
+
+
+
 
     </script>
 {% endblock %}

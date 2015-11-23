@@ -34,6 +34,10 @@ class Tag(models.Model):
     name = models.CharField(max_length=80)
 
 
+    def __unicode__(self):
+        return self.name
+
+
 class Concept(models.Model):
     """
     Something to learn
@@ -62,6 +66,7 @@ class Concept(models.Model):
     concept_type = models.CharField(max_length=1,
                                     choices=TYPE_OF_CARD,
                                     default=DEFINITION)
+
 
     def update_learning_coeff(self):
         """Update the value of the learning coefficient

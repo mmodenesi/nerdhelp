@@ -13,7 +13,7 @@ class ConceptAdmin(admin.ModelAdmin):
     """ModelAdmin for Concept"""
     list_display = ('name', 'concept_type', 'learning_coeff')
     list_filter = ('concept_type', 'course')
-    fields = ['concept_type', 'course', 'name', 'definition']
+    fields = ['concept_type', 'course', 'name', 'definition', 'tags']
 
 
 class CourseAdmin(admin.ModelAdmin):

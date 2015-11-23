@@ -17,8 +17,15 @@ from django_ajax.decorators import ajax
 # project imports
 from definitions.models import Concept
 from definitions.models import Course
+from definitions.models import Tag
 
 SUGGESTED_CARDS = 7
+
+def get_tags(_):
+    """return json with tagnames"""
+    return HttpResponse(json.dumps(sorted([t.name for t in Tag.objects.all()])),
+                        content_type="application/json")
+
 
 def search(request):
     """Show search results"""
@@ -59,6 +66,7 @@ def add_card(request):
         'card': card,
         'courses': Course.objects.all().order_by('name'),
         'concept_types': Concept.TYPE_OF_CARD,
+        'tags': Tag.objects.all(),
     }
     return render(request, 'definitions/edit_card.html', context)
 
@@ -84,6 +92,7 @@ def edit_card(request, card_id):
         'card': card,
         'courses': Course.objects.all().order_by('name'),
         'concept_types': Concept.TYPE_OF_CARD,
+        'tags': Tag.objects.all(),
     }
     return render(request, 'definitions/edit_card.html', context)
 
@@ -97,6 +106,13 @@ def save_card(request):
         title = request.POST.get('title')
         definition = request.POST.get('definition')
         course, _ = Course.objects.get_or_create(name=course_name.strip())
+        tags_strings = request.POST.get('tags', '')
+        if tags_strings:
+            tags_list = tags_strings.split(',')
+        else:
+            tags_list = []
+        tags_instances = [Tag.objects.get_or_create(name=name)[0] for name in tags_list]
+
         if card_id:
             card = get_object_or_404(Concept, pk=int(card_id))
             card.name = title
@@ -112,6 +128,12 @@ def save_card(request):
             )
 
         card.save()
+        for t in tags_instances:
+            card.tags.add(t)
+        for t in card.tags.all():
+            if not t in tags_instances:
+                card.tags.remove(t)
+
         return {"status": 200, "statusText": "OK", 'card_id': card.id}
 
 def random_card(request):
