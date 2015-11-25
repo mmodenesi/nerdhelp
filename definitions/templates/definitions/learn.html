@@ -66,18 +66,22 @@
           $('#edit').show()
       });
 
+      function show_next_card() {
+          location.href =  "{% url 'next_card' card.id %}";
+      }
+
       $('#rank-up').click(function() {
           $.ajax({
             url: "/concepts/rank-up/{{ card.id }}/",
           }).done(function() {
-            location.href =  "{% url 'random_card' %}?c={{ card.course.id }}";
+              show_next_card();
           });
       });
       $('#rank-down').click(function() {
           $.ajax({
             url: "/concepts/rank-down/{{ card.id }}/",
           }).done(function() {
-              location.href =  "{% url 'random_card' %}?c={{ card.course.id }}";
+              show_next_card();
           });
       });
   </script>

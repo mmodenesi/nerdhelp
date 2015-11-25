@@ -18,13 +18,21 @@
     <!-- Custom styles for this template -->
     <link href="{% static 'definitions/css/dashboard.css' %}" rel="stylesheet">
     <link href="{% static 'definitions/css/bootstrap-tagsinput.css' %}" rel="stylesheet">
-    <link href="{% static 'definitions/css/typeaheadjs.css' %}" rel="stylesheet">
-
+    <style>
+        span.filters {
+            margin-top: 3px;
+        }
+        span.filters:hover {
+            background-color: #DA1B1B;
+            cursor: not-allowed;
+        }
+    </style>
+    {% block style %}
+    {% endblock %}
   </head>
 
   <body>
 
-    {% block topnavbar %}
     <nav class="navbar navbar-inverse navbar-fixed-top">
       <div class="container-fluid">
 
@@ -38,36 +46,25 @@
           <a class="navbar-brand" href="{% url 'home' %}">Nerdhelp</a>
         </div>
 
+    {% block topnavbar %}
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav navbar-right">
-            {% if courses %}
-            <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                {% if card %}
-                  {{ card.course.name }}
-                {% else %}
-                  Cursos
-                {% endif %} <span class="caret"></span></a>
-                <ul class="dropdown-menu">
-                  {% for c in courses %}
-                  <li><a href="{% url 'random_card' %}?c={{ c.id }}">{{ c.name }}</a></li>
-                  {% endfor %}
-                </ul>
-              </li>
-            {% endif %}
             <li>
               <form class="navbar-form navbar-right" action="/concepts/search/" method="get">
                 <input class="form-control" placeholder="Buscar..." type="text" name="q">
               </form>
             </li>
             <li>
-              <a href="{% url 'random_card' %}{% if card %}?c={{ card.course.id }}{% endif %}">Random</a>
+              <a onclick="get_random_card()" href="#">Random</a>
+            </li>
+            <li>
+              <a onclick="show_all()" href="#">Todas</a>
             </li>
           </ul>
       </div>
+    {% endblock %}
 
     </nav>
-    {% endblock %}
 
     {% block sidenavbar %}
     <div class="container-fluid">
@@ -80,6 +77,8 @@
           <hr>
     <div class="form-group">
       <input type="text" class="form-control" id="filter_input" placeholder="Filtrar conceptos">
+    </div>
+    <div id="filtros_activos">
     </div>
         </div>
       </div>
@@ -94,10 +93,120 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="{% static 'definitions/js/jquery.min.js' %}"></script>
     <script src="{% static 'definitions/bootstrap-3.3.5-dist/js/bootstrap.min.js' %}"></script>
-
+    <script type="text/javascript" src="{% static 'definitions/js/bootstrap-typeahead.js' %}"></script>
     <script type="text/javascript" src="{% static 'django_ajax/js/jquery.ajax.min.js' %}"></script>
 
+    <script type="text/javascript">
+
+
+        function get_random_card() {
+            window.location = "{% url 'random_card' %}";
+        }
+
+        function show_all() {
+            window.location = "{% url 'search' %}";
+        }
+
+        var filtros = [
+            {% for f in filters %}
+                {
+                    value: "{{ f.value }}",
+                    name:  "{{ f.visible_name }}",
+                },
+            {% endfor %}
+        ]
+
+        function remove_filter(name, value) {
+              ajaxPost('{% url "set_filter" %}',
+                        { name: name, value: value, state: 0},
+                        function () {
+                          return;
+                        });
+              var removed_index = -1;
+              for (var i = 0; i < filtros.length; i++) {
+                  if (filtros[i].name == name && filtros[i].value == value) {
+                     removed_index = i;
+                     break;
+                  }
+              }
+              if (removed_index > -1) {
+                  filtros.splice(removed_index, 1);
+              }
+              render_filters();
+        }
+
+        function render_filters() {
+            var filters_div = $('#filtros_activos');
+            new_html = '';
+            for (var i = 0; i < filtros.length; i++) {
+                var name = filtros[i].name;
+                if (name.length > 30) {
+                    name = name.substring(0, 27) + '...';
+                }
+                new_html += '<span class="label label-success filters" ';
+                new_html += 'onclick="remove_filter(\'' +  filtros[i].name + '\', \'' +  filtros[i].value + '\')">' + name + '</span><br style="height: 10px;">';
+            }
+            filters_div.text('');
+            filters_div.append(new_html);
+        }
+
+
+        render_filters();
+
+        function limpiar_model(text){
+            text = text.replace(/Tipo de concepto$/, '');
+            text = text.replace(/Curso$/, '');
+            text = text.replace(/Etiqueta$/, '');
+            return text;
+        }
+
+        $('#filter_input').typeahead({
+            minLength: 3,
+            ajax: '{% url "autocomplete" %}',
+            matcher: function(item){ return true; },
+            items: 8,
+            itemSelected: function(item){
+                var value = item[0].getAttribute('data-value');
+                var name = limpiar_model(item.text());
+                filtros.push({
+                    value: value,
+                    name: name,
+                });
+                // set new filter on database
+                ajaxPost('{% url "set_filter" %}',
+                         { name: name, value: value, state: 1},
+                         function () {
+                            return;
+                         });
+                render_filters();
+            },
+            updater: function(item){
+                return item;
+            },
+            render: function (items) {
+                var that = this;
+                items = $(items).map(function (i, item) {
+                    i = $(that.options.item).attr('data-value', item[that.options.val]);
+                    // hack para ver el tipo del elemento
+                    var html_added = '<p style="text-align: right;"><small><em>' + item.tipo + '</em></small></p>'
+                    i.find('a').html(that.highlighter(item[that.options.display], item) + html_added);
+                    return i[0];
+                });
+                items.first().addClass('active');
+                this.$menu.html(items);
+                return this;
+            },
+            select: function () {
+                var $selectedItem = this.$menu.find('.active');
+                var text = '';
+                this.$element.val(text).change();
+                this.options.itemSelected($selectedItem, $selectedItem.attr('data-value'), text);
+                return this.hide();
+            },
+        });
+    </script>
     {% block scripts %}
     {% endblock %}
 
 </body></html>
+

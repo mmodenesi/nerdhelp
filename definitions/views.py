@@ -4,26 +4,102 @@ Views for app definitions
 """
 # python imports
 import random
+import operator
 import json
 
 # django imports
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django_ajax.decorators import ajax
+from django.views.decorators.csrf import csrf_exempt
 
 # project imports
 from definitions.models import Concept
 from definitions.models import Course
 from definitions.models import Tag
+from definitions.models import Filter
 
-SUGGESTED_CARDS = 7
+
+COURSE = 'C'
+TYPE = 'T'
+TAG = 'E'
+
+
+def next_card(_, card_id):
+    """Show next card, according to current filters"""
+    concepts = get_concepts_applying_filters().order_by('pk')
+    if concepts.filter(id__gt=card_id):
+        card = concepts.filter(id__gt=card_id)[0]
+    else:
+        card = concepts[0]
+    return redirect('view_card', card.id)
+
 
 def get_tags(_):
     """return json with tagnames"""
     return HttpResponse(json.dumps(sorted([t.name for t in Tag.objects.all()])),
+                        content_type="application/json")
+
+@csrf_exempt
+@ajax
+def set_filter(request):
+    """Activate or deativate Filter"""
+    if request.POST:
+        name = request.POST['name']
+        value = request.POST['value']
+        state = bool(int(request.POST['state']))
+        f, _ = Filter.objects.get_or_create(visible_name=name, value=value)
+        f.active = state
+        f.save()
+
+@csrf_exempt
+def autocomplete(request):
+    """return possible filters"""
+    response_data = []
+    if request.POST:
+        query = request.POST.get('query', None)
+        if query:
+            query = query.lower().strip()
+
+            # filtros por Course
+            matches = Course.objects.filter(name__icontains=query)
+            for m in matches:
+                value = '%s;%s' % (COURSE, m.id)
+                if not Filter.objects.filter(active=True, value=value):
+                    response_data.append(
+                        dict(id=value,
+                             name=m.__unicode__(),
+                             tipo='Curso')
+                        )
+
+            # filtros por Tag
+            matches = Tag.objects.filter(name__icontains=query)
+            for m in matches:
+                value = '%s;%s' % (TAG, m.id)
+                if not Filter.objects.filter(active=True, value=value):
+                    response_data.append(
+                        dict(id=value,
+                             name=m.__unicode__(),
+                             tipo='Etiqueta')
+                        )
+
+
+            # filtros por Concept.type
+            for value, name in Concept.TYPE_OF_CARD:
+                if query in name.lower():
+                    value = '%s;%s' % (TYPE, value)
+                    if not Filter.objects.filter(active=True, value=value):
+                        response_data.append(
+                            dict(id=value,
+                                 name=name,
+                                 tipo='Tipo de concepto')
+                            )
+
+    return HttpResponse(json.dumps(response_data),
                         content_type="application/json")
 
 
@@ -34,18 +110,22 @@ def search(request):
     if query:
         query = query.strip()
 
-    result = []
-    for token in query.split():
-        result.extend(Concept.objects.filter(name__icontains=token))
-        result.extend(Concept.objects.filter(definition__icontains=token))
-        result.extend(Concept.objects.filter(tags__name__icontains=token))
+        result = []
+        for token in query.split():
+            result.extend(Concept.objects.filter(name__icontains=token))
+            result.extend(Concept.objects.filter(definition__icontains=token))
+            result.extend(Concept.objects.filter(tags__name__icontains=token))
 
-    result = set(result)
+        result = set(result)
+    else:
+        result = get_concepts_applying_filters().order_by('course__id', 'pk')
 
     context = {
         'courses': Course.objects.all().order_by('name'),
         'query': query,
         'result': result,
+        'filters': [{'visible_name': f.visible_name, 'value': f.value}
+                    for f in Filter.objects.filter(active=True)],
     }
     return render(request, 'definitions/search_results.html', context)
 
@@ -78,9 +158,9 @@ def view_card(request, card_id):
     context = {
         'progress': card.course.progress(),
         'card': card,
-        'suggested_cards': Concept.objects.filter(course=card.course).exclude(
-            id=card.id).order_by('learning_coeff')[:SUGGESTED_CARDS],
         'courses': Course.objects.all().exclude(id=card.course.id),
+        'filters': [{'visible_name': f.visible_name, 'value': f.value}
+                    for f in Filter.objects.filter(active=True)],
     }
 
     return render(request, 'definitions/learn.html', context)
@@ -136,20 +216,37 @@ def save_card(request):
 
         return {"status": 200, "statusText": "OK", 'card_id': card.id}
 
-def random_card(request):
-    """Show random concept"""
-
-    course_id = request.GET.get('c', None)
-    if course_id:
-        concepts = Concept.objects.filter(course__id=int(course_id)).order_by('learning_coeff')
+def get_concepts_applying_filters():
+    """Apply active filters to show significative concepts"""
+    active_filters = Filter.objects.filter(active=True)
+    if active_filters:
+        qs_courses = [Q()]
+        qs_tags = [Q()]
+        qs_types = [Q()]
+        for f in active_filters:
+            key, value = f.value.split(';')
+            if key == 'E':
+                qs_tags.append(Q(tags__id=value))
+            elif key == 'C':
+                qs_courses.append(Q(course__id=value))
+            elif key == 'T':
+                qs_types.append(Q(concept_type=value))
+        q_courses = reduce(operator.or_, qs_courses)
+        q_tags = reduce(operator.or_, qs_tags)
+        q_types = reduce(operator.or_, qs_types)
+        q = Q(q_courses & q_tags & q_types)
+        concepts = Concept.objects.filter(q)
     else:
-        concepts = Concept.objects.all().order_by('learning_coeff')
+        concepts = Concept.objects.all()
+    return concepts
 
-
-    concepts = concepts[:max(len(concepts)/10, 6)]
-
+def random_card(_):
+    """Show random concept"""
+    concepts = get_concepts_applying_filters()
+    concepts = concepts.order_by('learning_coeff')
+    if len(concepts) > 20:
+        concepts = concepts[:20]
     card = random.choice(concepts)
-
     return redirect('view_card', card.id)
 
 def rank_up(_, concept_id):
@@ -179,8 +276,9 @@ def home(request):
     home
     """
     context = {
-        'suggested_cards': Concept.objects.all().order_by('learning_coeff')[:SUGGESTED_CARDS],
         'courses': Course.objects.all().order_by('name'),
+        'filters': [{'visible_name': f.visible_name, 'value': f.value}
+                    for f in Filter.objects.filter(active=True)],
     }
     return render(request, 'definitions/home.html', context)
 
@@ -193,5 +291,7 @@ def view_course(request, course_id):
     context = {
         'course': course,
         'concepts': Concept.objects.filter(course=course).order_by('id'),
+        'filters': [{'visible_name': f.visible_name, 'value': f.value}
+                    for f in Filter.objects.filter(active=True)],
     }
     return render(request, 'definitions/view_course.html', context)

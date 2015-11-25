@@ -53,7 +53,7 @@ class Concept(models.Model):
     TYPE_OF_CARD = (
         (THEOREM, 'Teorema'),
         (LEMA, 'Lema'),
-        (DEFINITION, 'Definición'),
+        (DEFINITION, u'Definición'),
         (EXAMPLE, 'Ejemplo'),
         (PROBLEM, 'Problema'),
     )
@@ -99,4 +99,13 @@ class Reaction(models.Model):
     card = models.ForeignKey(Concept, related_name='reactions')
     value = models.IntegerField()
     created = models.DateTimeField(editable=False, auto_now_add=True)
+
+class Filter(models.Model):
+    """
+    Filters
+    """
+    visible_name = models.CharField(max_length=100)
+    value = models.CharField(max_length=100)
+    active = models.BooleanField(default=True)
+
 

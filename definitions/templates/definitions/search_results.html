@@ -5,9 +5,12 @@
 
 {% block content %}
 <div class="col-sm-9 col-sm-offset-3 col-md-9 col-md-offset-2 main">
-  <h1 class="page-header">
-    Resultados de la b&uacute;squeda para "{{ query }}"
-  </h1>
+  {% if query %}
+    <h1 class="page-header">
+      Resultados de la b&uacute;squeda para "{{ query }}"
+    </h1>
+  {% endif %}
+
   {% for card in result %}
   <div class="list-group">
     <a href="{% url 'view_card' card.id %}" class="list-group-item">
