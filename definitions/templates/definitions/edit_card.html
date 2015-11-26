@@ -148,9 +148,16 @@ margin: 0;
         }
 
         $('#btn_save').click( function() {
-            post_data(function(c) {
-                window.location = "{% url 'home' %}";
-            });
+            {% if card.id %}
+                post_data(function(c) {
+                    window.location = "{% url 'view_card' card.id %}";
+                });
+            {% else %}
+                post_data(function(c){
+                    window.location = "/concepts/card/" + c.card_id;
+                });
+            {% endif %}
+
         });
 
         $('#btn_save_and_continue').click( function() {

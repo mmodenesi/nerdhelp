@@ -28,6 +28,14 @@ COURSE = 'C'
 TYPE = 'T'
 TAG = 'E'
 
+def prev_card(_, card_id):
+    """Show prev card, according to current filters"""
+    concepts = get_concepts_applying_filters().order_by('-pk')
+    if concepts.filter(id__lt=card_id):
+        card = concepts.filter(id__lt=card_id)[0]
+    else:
+        card = concepts[0]
+    return redirect('view_card', card.id)
 
 def next_card(_, card_id):
     """Show next card, according to current filters"""
@@ -37,7 +45,6 @@ def next_card(_, card_id):
     else:
         card = concepts[0]
     return redirect('view_card', card.id)
-
 
 def get_tags(_):
     """return json with tagnames"""

@@ -25,11 +25,17 @@
   <div id="data">
   </div>
   <div style="float: right">
+      <button type="button" class="btn btn-default rank-btn" style="float: center;" onclick="show_prev_card();">
+        <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
+      </button>
       <button type="button" class="btn btn-success rank-btn" style="float: center;" id="rank-up" aria-label="Right Align">
         <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
       </button>
       <button type="button" class="btn btn-danger rank-btn" style="float: center;" id="rank-down">
         <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+      </button>
+      <button type="button" class="btn btn-default rank-btn" style="float: center;" onclick="show_next_card();">
+        <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>
       </button>
   </div>
 <div>
@@ -68,6 +74,10 @@
 
       function show_next_card() {
           location.href =  "{% url 'next_card' card.id %}";
+      }
+
+      function show_prev_card() {
+          location.href =  "{% url 'prev_card' card.id %}";
       }
 
       $('#rank-up').click(function() {
