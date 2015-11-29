@@ -1,41 +1,28 @@
 <!DOCTYPE html>
-<html lang="en"><head>
-<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<html lang="en">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link rel="icon" href="">
 
     <title>NH | {% block title %}{% endblock %}</title>
 
-    <!-- Bootstrap core CSS -->
     {% load staticfiles %}
-    <link href="{% static 'definitions/bootstrap-3.3.5-dist/css/bootstrap.min.css' %}" rel="stylesheet">
+      <!-- general css for all templates -->
+      <link href="{% static 'definitions/bootstrap-3.3.5-dist/css/bootstrap.min.css' %}" rel="stylesheet">
+      <link href="{% static 'definitions/css/filters.css' %}" rel="stylesheet">
+      <link href="{% static 'definitions/css/dashboard.css' %}" rel="stylesheet">
+      <link href="{% static 'definitions/css/bootstrap-tagsinput.css' %}" rel="stylesheet">
 
-    <!-- Custom styles for this template -->
-    <link href="{% static 'definitions/css/dashboard.css' %}" rel="stylesheet">
-    <link href="{% static 'definitions/css/bootstrap-tagsinput.css' %}" rel="stylesheet">
-    <style>
-        span.filters {
-            margin-top: 3px;
-        }
-        span.filters:hover {
-            background-color: #DA1B1B;
-            cursor: not-allowed;
-        }
-    </style>
-    {% block style %}
+    {% block template_style %}
     {% endblock %}
   </head>
 
   <body>
-
     <nav class="navbar navbar-inverse navbar-fixed-top">
       <div class="container-fluid">
-
         <div class="navbar-header">
           <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
             <span class="sr-only">Toggle navigation</span>
@@ -46,24 +33,25 @@
           <a class="navbar-brand" href="{% url 'home' %}">Nerdhelp</a>
         </div>
 
-    {% block topnavbar %}
-        <div id="navbar" class="navbar-collapse collapse">
-          <ul class="nav navbar-nav navbar-right">
-            <li>
-              <form class="navbar-form navbar-right" action="/concepts/search/" method="get">
-                <input class="form-control" placeholder="Buscar..." type="text" name="q">
-              </form>
-            </li>
-            <li>
-              <a onclick="get_random_card()" href="#">Random</a>
-            </li>
-            <li>
-              <a onclick="show_all()" href="#">Todas</a>
-            </li>
-          </ul>
-      </div>
-    {% endblock %}
+        {% block topnavbar %}
+          <div id="navbar" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav navbar-right">
+              <li>
+                <form class="navbar-form navbar-right" action="/concepts/search/" method="get">
+                  <input class="form-control" placeholder="Buscar..." type="text" name="q">
+                </form>
+              </li>
+              <li>
+                <a onclick="get_random_card()" href="#">Random</a>
+              </li>
+              <li>
+                <a onclick="show_all()" href="#">Todas</a>
+              </li>
+            </ul>
+          </div>
+        {% endblock %}
 
+      </div>
     </nav>
 
     {% block sidenavbar %}
@@ -75,29 +63,27 @@
             <li><a href="/admin/definitions/course/add/" target="_blank">Agregar Curso</a></li>
           </ul>
           <hr>
-    <div class="form-group">
-      <input type="text" class="form-control" id="filter_input" placeholder="Filtrar conceptos">
-    </div>
-    <div id="filtros_activos">
-    </div>
-        </div>
-      </div>
-    </div>
+          <div class="form-group">
+            <input type="text" class="form-control" id="filter_input" placeholder="Filtrar conceptos">
+          </div>
+          <div id="filtros_activos">
+          </div>
+        </div><!-- end sidebar -->
+      </div><!-- end row -->
+    </div><!-- end container-fluid -->
     {% endblock %}
 
     {% block content %}
     {% endblock %}
 
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
+    <!-- general js for all templates -->
     <script src="{% static 'definitions/js/jquery.min.js' %}"></script>
     <script src="{% static 'definitions/bootstrap-3.3.5-dist/js/bootstrap.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'definitions/js/bootstrap-typeahead.js' %}"></script>
     <script type="text/javascript" src="{% static 'django_ajax/js/jquery.ajax.min.js' %}"></script>
 
-    <script type="text/javascript">
 
+    <script type="text/javascript">
 
         function get_random_card() {
             window.location = "{% url 'random_card' %}";
@@ -205,6 +191,7 @@
             },
         });
     </script>
+
     {% block scripts %}
     {% endblock %}
 

@@ -162,8 +162,14 @@ def view_card(request, card_id):
 
     card = get_object_or_404(Concept, pk=card_id)
 
+    filtered = get_concepts_applying_filters()
+    if filtered:
+        progress = sum([c.progress() for c in filtered]) / len(filtered)
+    else:
+        progress = card.course.progress()
+
     context = {
-        'progress': card.course.progress(),
+        'progress': progress,
         'card': card,
         'courses': Course.objects.all().exclude(id=card.course.id),
         'filters': [{'visible_name': f.visible_name, 'value': f.value}
@@ -302,3 +308,4 @@ def view_course(request, course_id):
                     for f in Filter.objects.filter(active=True)],
     }
     return render(request, 'definitions/view_course.html', context)
+

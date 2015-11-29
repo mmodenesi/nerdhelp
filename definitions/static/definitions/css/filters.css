@@ -1,0 +1,7 @@
+span.filters {
+    margin-top: 3px;
+}
+span.filters:hover {
+    background-color: #DA1B1B;
+    cursor: not-allowed;
+}
