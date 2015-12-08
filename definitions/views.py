@@ -251,7 +251,7 @@ def get_concepts_applying_filters():
         concepts = Concept.objects.filter(q)
     else:
         concepts = Concept.objects.all()
-    return concepts
+    return concepts.distinct().order_by('id')
 
 def random_card(_):
     """Show random concept"""
