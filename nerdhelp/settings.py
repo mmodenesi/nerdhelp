@@ -129,6 +129,9 @@ MATHJAX_CONFIG_DATA = {
             'llbracket': r'\unicode{x27E6}',
             'rrbracket': r'\unicode{x27E7}',
         },
+        'extensions': [
+            'action.js',
+        ]
     }
 }
 
