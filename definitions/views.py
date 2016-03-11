@@ -118,10 +118,9 @@ def search(request):
         query = query.strip()
 
         result = []
-        for token in query.split():
-            result.extend(Concept.objects.filter(name__icontains=token))
-            result.extend(Concept.objects.filter(definition__icontains=token))
-            result.extend(Concept.objects.filter(tags__name__icontains=token))
+        result.extend(Concept.objects.filter(name__icontains=query))
+        result.extend(Concept.objects.filter(definition__icontains=query))
+        result.extend(Concept.objects.filter(tags__name__icontains=query))
 
         result = set(result)
     else:
