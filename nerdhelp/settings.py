@@ -83,8 +83,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'nerdhelp',
-        'USER': 'root',
-        'PASSWORD': 'qwertyui',
+        'USER': 'user',
+        'PASSWORD': 'pass',
         'HOST': 'localhost',
     }
 }
@@ -111,7 +111,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = '/home/marcos/Code/nerdhelp/static/'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = '/home/marcos/Code/nerdhelp/nerdhelp/media/'
+MEDIA_ROOT = ''
 
 MATHJAX_ENABLED = True
 MATHJAX_LOCAL_PATH = 'definitions/js/MathJax'
