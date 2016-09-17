@@ -6,3 +6,5 @@ Create class notes, summarys, synopsis and recaps using rich text editor, latex 
 
 I developed it to organize my own class notes. So authentication mechanism is absent.
 It's focused on organizing your knowledge on cards, tagging them, then using to prepare your exams.
+
+![screenshot_1!](overview_1.png)
