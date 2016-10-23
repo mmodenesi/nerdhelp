@@ -83,9 +83,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'nerdhelp',
-        'USER': 'user',
-        'PASSWORD': 'pass',
-        'HOST': 'localhost',
+        'USER': 'root',
+        'PASSWORD': 'nerdhelp',
+        'HOST': '172.17.0.2',
     }
 }
 
@@ -146,4 +146,3 @@ CKEDITOR_CONFIGS = {
         ),
     }
 }
-
