@@ -10,16 +10,16 @@
     <title>NH | {% block title %}{% endblock %}</title>
 
     {% load staticfiles %}
-      <!-- general css for all templates -->
-      <link href="{% static 'definitions/bootstrap-3.3.5-dist/css/bootstrap.min.css' %}" rel="stylesheet">
-      <link href="{% static 'definitions/css/filters.css' %}" rel="stylesheet">
-      <link href="{% static 'definitions/css/dashboard.css' %}" rel="stylesheet">
-      <link href="{% static 'definitions/css/bootstrap-tagsinput.css' %}" rel="stylesheet">
+    <!-- general css for all templates -->
+    <link href="{% static 'definitions/bootstrap-3.3.5-dist/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'definitions/css/filters.css' %}" rel="stylesheet">
+    <link href="{% static 'definitions/css/dashboard.css' %}" rel="stylesheet">
+    <link href="{% static 'definitions/css/bootstrap-tagsinput.css' %}" rel="stylesheet">
 
     {% block template_style %}
     {% endblock %}
-  </head>
 
+  </head>
   <body>
     <nav class="navbar navbar-inverse navbar-fixed-top">
       <div class="container-fluid">
@@ -31,27 +31,32 @@
             <span class="icon-bar"></span>
           </button>
           <a class="navbar-brand" href="{% url 'home' %}">Nerdhelp</a>
-        </div>
+        </div> <!-- end div container-fluid -->
 
         {% block topnavbar %}
-          <div id="navbar" class="navbar-collapse collapse">
-            <ul class="nav navbar-nav navbar-right">
-              <li>
-                <form class="navbar-form navbar-right" action="/concepts/search/" method="get">
-                  <input class="form-control" placeholder="Buscar..." type="text" name="q">
-                </form>
-              </li>
-              <li>
-                <a onclick="get_random_card()" href="#">Random</a>
-              </li>
-              <li>
-                <a onclick="show_all()" href="#">Todas</a>
-              </li>
-            </ul>
-          </div>
-        {% endblock %}
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li>
+              <form class="navbar-form navbar-right" action="/concepts/search/" method="get">
+                <input class="form-control" placeholder="Buscar..." type="text" name="q">
+              </form>
+            </li>
+            <li>
+              <a onclick="get_random_card()" href="#">Random</a>
+            </li>
+            <li>
+              <a onclick="show_all()" href="#">Todas</a>
+            </li>
+            <li>
+              <a href="/concepts/export_pdf/{% if card %}?c={{ card.id }}{% endif %}">
+              <span class="glyphicon glyphicon-save-file" aria-hidden="true"></span>
+              </a>
+            </li>
+          </ul>
+        </div> <!-- end div navbar-collapse-colapse -->
+      {% endblock %}
 
-      </div>
+      </div> <!-- end div navbar-header-->
     </nav>
 
     {% block sidenavbar %}
@@ -82,118 +87,127 @@
     <script type="text/javascript" src="{% static 'definitions/js/bootstrap-typeahead.js' %}"></script>
     <script type="text/javascript" src="{% static 'django_ajax/js/jquery.ajax.min.js' %}"></script>
 
-
     <script type="text/javascript">
 
-        function get_random_card() {
-            window.location = "{% url 'random_card' %}";
+      function get_random_card() {
+        window.location = "{% url 'random_card' %}";
+      }
+
+      function show_all() {
+        window.location = "{% url 'search' %}";
+      }
+
+      var filtros = [
+        {% for f in filters %}
+          {
+            value: "{{ f.value }}",
+            name:  "{{ f.visible_name }}",
+          },
+        {% endfor %}
+      ];
+
+      function remove_filter(name, value) {
+        ajaxPost(
+          '{% url "set_filter" %}',
+          {
+            name: name,
+            value: value,
+            state: 0
+          },
+          function () { return; }
+        );
+        var removed_index = -1;
+        for (var i = 0; i < filtros.length; i++) {
+          if (filtros[i].name == name && filtros[i].value == value) {
+            removed_index = i;
+            break;
+          }
         }
-
-        function show_all() {
-            window.location = "{% url 'search' %}";
+        if (removed_index > -1) {
+          filtros.splice(removed_index, 1);
         }
-
-        var filtros = [
-            {% for f in filters %}
-                {
-                    value: "{{ f.value }}",
-                    name:  "{{ f.visible_name }}",
-                },
-            {% endfor %}
-        ]
-
-        function remove_filter(name, value) {
-              ajaxPost('{% url "set_filter" %}',
-                        { name: name, value: value, state: 0},
-                        function () {
-                          return;
-                        });
-              var removed_index = -1;
-              for (var i = 0; i < filtros.length; i++) {
-                  if (filtros[i].name == name && filtros[i].value == value) {
-                     removed_index = i;
-                     break;
-                  }
-              }
-              if (removed_index > -1) {
-                  filtros.splice(removed_index, 1);
-              }
-              render_filters();
-        }
-
-        function render_filters() {
-            var filters_div = $('#filtros_activos');
-            new_html = '';
-            for (var i = 0; i < filtros.length; i++) {
-                var name = filtros[i].name;
-                if (name.length > 30) {
-                    name = name.substring(0, 27) + '...';
-                }
-                new_html += '<span class="label label-success filters" ';
-                new_html += 'onclick="remove_filter(\'' +  filtros[i].name + '\', \'' +  filtros[i].value + '\')">' + name + '</span><br style="height: 10px;">';
-            }
-            filters_div.text('');
-            filters_div.append(new_html);
-        }
-
-
         render_filters();
+      }
 
-        function limpiar_model(text){
-            text = text.replace(/Tipo de concepto$/, '');
-            text = text.replace(/Curso$/, '');
-            text = text.replace(/Etiqueta$/, '');
-            return text;
+      function render_filters() {
+        var filters_div = $('#filtros_activos');
+        new_html = '';
+        for (var i = 0; i < filtros.length; i++) {
+          var name = filtros[i].name;
+          if (name.length > 30) {
+            name = name.substring(0, 27) + '...';
+          }
+          new_html += '<span class="label label-success filters" ';
+          new_html += 'onclick="remove_filter(\'' + filtros[i].name + '\', \'' + filtros[i].value + '\')">' + name + '</span><br style="height: 10px;">';
         }
+        filters_div.text('');
+        filters_div.append(new_html);
+      }
 
-        $('#filter_input').typeahead({
-            minLength: 3,
-            ajax: '{% url "autocomplete" %}',
-            matcher: function(item){ return true; },
-            items: 8,
-            itemSelected: function(item){
-                var value = item[0].getAttribute('data-value');
-                var name = limpiar_model(item.text());
-                filtros.push({
-                    value: value,
-                    name: name,
-                });
-                // set new filter on database
-                ajaxPost('{% url "set_filter" %}',
-                         { name: name, value: value, state: 1},
-                         function () {
-                            return;
-                         });
-                render_filters();
+
+      render_filters();
+
+      function limpiar_model(text){
+        text = text.replace(/Tipo de concepto$/, '');
+        text = text.replace(/Curso$/, '');
+        text = text.replace(/Etiqueta$/, '');
+        return text;
+      }
+
+      $('#filter_input').typeahead({
+        minLength: 3,
+        ajax: '{% url "autocomplete" %}',
+        matcher: function(item){ return true; },
+        items: 8,
+        itemSelected: function(item){
+          var value = item[0].getAttribute('data-value');
+          var name = limpiar_model(item.text());
+          filtros.push({
+            value: value,
+            name: name,
+          });
+          // set new filter on database
+          ajaxPost(
+            '{% url "set_filter" %}',
+            {
+              name: name,
+              value: value,
+              state: 1
             },
-            updater: function(item){
-                return item;
-            },
-            render: function (items) {
-                var that = this;
-                items = $(items).map(function (i, item) {
-                    i = $(that.options.item).attr('data-value', item[that.options.val]);
-                    // hack para ver el tipo del elemento
-                    var html_added = '<p style="text-align: right;"><small><em>' + item.tipo + '</em></small></p>'
-                    i.find('a').html(that.highlighter(item[that.options.display], item) + html_added);
-                    return i[0];
-                });
-                items.first().addClass('active');
-                this.$menu.html(items);
-                return this;
-            },
-            select: function () {
-                var $selectedItem = this.$menu.find('.active');
-                var text = '';
-                this.$element.val(text).change();
-                this.options.itemSelected($selectedItem, $selectedItem.attr('data-value'), text);
-                return this.hide();
-            },
-        });
+            function () { return; }
+          );
+          render_filters();
+        },
+        updater: function(item){
+          return item;
+        },
+        render: function (items) {
+          var that = this;
+          items = $(items).map(function (i, item) {
+            i = $(that.options.item).attr('data-value', item[that.options.val]);
+            // hack para ver el tipo del elemento
+            var html_added = '<p style="text-align: right;"><small><em>' + item.tipo + '</em></small></p>'
+            i.find('a').html(that.highlighter(item[that.options.display], item) + html_added);
+            return i[0];
+          });
+          items.first().addClass('active');
+          this.$menu.html(items);
+          return this;
+        },
+        select: function () {
+          var $selectedItem = this.$menu.find('.active');
+          var text = '';
+          this.$element.val(text).change();
+          this.options.itemSelected($selectedItem, $selectedItem.attr('data-value'), text);
+          return this.hide();
+        },
+      });
+
     </script>
 
     {% block scripts %}
     {% endblock %}
 
-</body></html>
+  </body>
+</html>
 

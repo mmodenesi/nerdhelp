@@ -81,9 +81,9 @@ class Concept(models.Model):
     def clean_definition(self):
         """Return string prepared to be inserted in javascript"""
         result = self.definition.replace('\r\n', '\n')
-        result = ' '.join(result.split('\n'))
         result = result.replace('\\', '\\\\')
         result = result.replace('"', r'\"')
+        result = r'\n'.join(result.split('\n'))
         return result
 
     def progress(self):

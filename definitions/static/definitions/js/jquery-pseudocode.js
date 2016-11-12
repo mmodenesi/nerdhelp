@@ -126,7 +126,8 @@
                     }
                 });
 
-                if (commentLine === false) {
+                // Marcos Modenesi: permitir comentarios al final de la línea
+                if (true || commentLine === false) {
                     // Scan for keywords:
                     $.each(settings.keywords, function(keyword, color) {
                         if (line.indexOf(keyword) >= 0) {

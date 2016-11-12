@@ -1,0 +1,23 @@
+
+{% extends 'definitions/base.html' %}
+
+{% block title %}Error{% endblock %}
+
+{% block content %}
+<div class="col-sm-10 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+    <div class="list-group">
+      <h1>Error al generar PDF :(</h1>
+    </div>
+    {% if error %}
+      <div class="alert alert-warning" role="alert">
+        <pre>
+          {% autoescape off %}
+            {{ error }}
+          {% endautoescape %}
+        </pre>
+      </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+

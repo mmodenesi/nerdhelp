@@ -4,14 +4,16 @@ Urls for app Definitions
 """
 
 from django.conf.urls import patterns, url
-from definitions.views import random_card
-from definitions.views import view_card, edit_card, save_card, add_card
-from definitions.views import rank_up, rank_down
-from definitions.views import next_card, prev_card
-from definitions.views import home, search
-from definitions.views import view_course
+
+from definitions.views import export_pdf
 from definitions.views import get_tags, autocomplete
+from definitions.views import home, search
+from definitions.views import next_card, prev_card
+from definitions.views import random_card
+from definitions.views import rank_up, rank_down
 from definitions.views import set_filter
+from definitions.views import view_card, edit_card, save_card, add_card
+from definitions.views import view_course
 
 urlpatterns = patterns(
     '',
@@ -29,6 +31,7 @@ urlpatterns = patterns(
     url(r'^rank-down/(?P<concept_id>\d+)/$', rank_down, name='rank_down'),
     url(r'^get_tags/$', get_tags, name='get_tags'),
     url(r'^set_filter/$', set_filter, name='set_filter'),
+    url(r'^export_pdf/$', export_pdf, name='export_pdf'),
     url(r'^autocomplete/$', autocomplete, name='autocomplete'),
 )
 

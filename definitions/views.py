@@ -3,25 +3,30 @@
 Views for app definitions
 """
 # python imports
-import random
-import operator
 import json
+import operator
+import random
+import tempfile
 
 # django imports
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.servers.basehttp import FileWrapper
+from django.db.models import Count
 from django.db.models import Q
 from django.http import HttpResponse
-from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
-from django_ajax.decorators import ajax
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
+from django_ajax.decorators import ajax
 
 # project imports
 from definitions.models import Concept
 from definitions.models import Course
-from definitions.models import Tag
 from definitions.models import Filter
+from definitions.models import Tag
+from definitions.pdfutils import Latex2PdfException
+from definitions.pdfutils import concepts2pdf
 
 
 COURSE = 'C'
@@ -148,6 +153,19 @@ def add_card(request):
             card = None
     else:
         card = None
+    if card:
+
+        # find out most used type of concept
+        types = Concept.objects.filter(
+            course=card['course']
+            ).values(
+                'concept_type'
+            ).annotate(
+                dcount=Count('concept_type')
+            ).order_by('-dcount')
+        if types:
+            card['concept_type'] = types[0]['concept_type']
+
     context = {
         'card': card,
         'courses': Course.objects.all().order_by('name'),
@@ -203,7 +221,8 @@ def save_card(request):
             tags_list = tags_strings.split(',')
         else:
             tags_list = []
-        tags_instances = [Tag.objects.get_or_create(name=name)[0] for name in tags_list]
+        tags_instances = [Tag.objects.get_or_create(name=name)[0]
+                          for name in tags_list]
 
         if card_id:
             card = get_object_or_404(Concept, pk=int(card_id))
@@ -307,4 +326,30 @@ def view_course(request, course_id):
                     for f in Filter.objects.filter(active=True)],
     }
     return render(request, 'definitions/view_course.html', context)
+
+def export_pdf(request):
+    """Produce pdf document showing filtered cards"""
+    card_id = request.GET.get('c')
+    if card_id:
+        concepts = Concept.objects.filter(pk=card_id)
+    else:
+        concepts = get_concepts_applying_filters()
+    if not concepts:
+        concepts = Concept.objects.all()
+
+    _, path = tempfile.mkstemp(suffix='.pdf')
+    try:
+        concepts2pdf(concepts, path)
+    except Latex2PdfException as e:
+        context = {
+            'error': str(e),
+            'filters': [{'visible_name': f.visible_name, 'value': f.value}
+                        for f in Filter.objects.filter(active=True)],
+            }
+        return render(request, 'definitions/pdferror.html', context)
+
+    response = HttpResponse(FileWrapper(open(path, 'rb')),
+                            content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="nerdhelp.pdf"'
+    return response
 
