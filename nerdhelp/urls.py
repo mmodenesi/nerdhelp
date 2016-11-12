@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from django.views.generic.base import RedirectView
+
 
 """nerdhelp URL Configuration
 
@@ -26,7 +28,11 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += patterns('',
-                            (r'^media/(?P<path>.*)$',
-                             'django.views.static.serve',
-                             {'document_root': settings.MEDIA_ROOT,
-                              'show_indexes': True}),)
+        (r'^media/(?P<path>.*)$',
+         'django.views.static.serve',
+        {'document_root': settings.MEDIA_ROOT, 'show_indexes': True}),
+    )
+
+urlpatterns.append(
+    url(r'^.*$', RedirectView.as_view(pattern_name='home', permanent=False)),
+)

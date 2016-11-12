@@ -59,7 +59,7 @@
     <div class="form-group">
         <label for="concept_textarea">Definición</label>
         <br>
-        <div class="django-ckeditor-widget" data-field-id="id_concept" style="display: inline-block;">
+        <div class="django-ckeditor-widget" data-field-id="id_concept" style="display: inline-block; width: 100%;">
             <textarea id="id_concept" name="Definición" data-processed="0" data-external-plugin-resources='[mathjax]' data-id="id_concept" data-type="ckeditortype" data-config="">
             {{ card.definition }}
             </textarea>
@@ -83,6 +83,7 @@
 {% block scripts %}
     <script type="text/javascript" src="{% static 'ckeditor/ckeditor/ckeditor.js' %}"></script>
     <script type="text/javascript" src="{% static 'ckeditor/ckeditor-init.js' %}"></script>
+    <script type="text/javascript" src="{% static 'ckeditor/ckeditor/config.js' %}"></script>
     <script type="text/javascript" src="{% static 'definitions/js/bootstrap-tagsinput.js' %}"></script>
     <script type="text/javascript" src="{% static 'definitions/js/typeahead.bundle.js' %}"></script>
     <script type="text/javascript">

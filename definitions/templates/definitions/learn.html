@@ -2,100 +2,135 @@
 
 {% block title %}{{ card.course.name }}{% endblock %}
 
-{% block content %}
-<div class="col-sm-9 col-sm-offset-3 col-md-9 col-md-offset-2 main">
-      {% if progress != None %}
-        <div class="progress">
-          <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ progress|stringformat:'f' }}%">
-            {{ progress|stringformat:'.1f' }}%
-          </div>
-        </div>
-      {% endif %}
-  <h1 class="page-header" title="{{ card.name }}">
-      {{ card.name|truncatechars:60 }}
-      <a href="{% url 'edit_card' card.id %}">
-      <button id="edit" type="button" class="btn btn-default" style="float: right;" aria-label="Right Align">
-        <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
-      </button>
-    </a>
-    <button id="show_def" type="button" class="btn btn-default" style="float: right;" aria-label="Right Align">
-      <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
-    </button>
-  </h1>
-  <div id="data">
-  </div>
-  <div style="float: right">
-      <button type="button" class="btn btn-default rank-btn" style="float: center;" onclick="show_prev_card();">
-        <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
-      </button>
-      <button type="button" class="btn btn-success rank-btn" style="float: center;" id="rank-up" aria-label="Right Align">
-        <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
-      </button>
-      <button type="button" class="btn btn-danger rank-btn" style="float: center;" id="rank-down">
-        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-      </button>
-      <button type="button" class="btn btn-default rank-btn" style="float: center;" onclick="show_next_card();">
-        <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>
-      </button>
-  </div>
-<div>
+{% block template_style %}
+  {% load staticfiles %}
+  <link href="{% static 'definitions/css/jquery-pseudocode.css' %}" type="text/css" rel="stylesheet">
 {% endblock %}
 
+{% block content %}
+    <div class="col-sm-9 col-sm-offset-3 col-md-9 col-md-offset-2 main">
+    {% if progress != None %}
+      <div class="progress">
+        <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ progress|stringformat:'f' }}%">
+          {{ progress|stringformat:'.1f' }}%
+        </div>
+      </div>
+    {% endif %}
+      <h1 class="page-header" title="{{ card.name }}">
+        {{ card.name|truncatechars:60 }}
+        <a href="{% url 'edit_card' card.id %}">
+          <button id="edit" type="button" class="btn btn-default" style="float: right;" aria-label="Right Align">
+            <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
+          </button>
+        </a>
+        <button id="show_def" type="button" class="btn btn-default" style="float: right;" aria-label="Right Align">
+          <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+        </button>
+      </h1>
+      <div id="data">
+      </div>
+      <div style="float: right">
+          <button type="button" class="btn btn-default rank-btn" style="float: center;" onclick="show_prev_card();">
+            <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="btn btn-success rank-btn" style="float: center;" id="rank-up" aria-label="Right Align">
+            <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="btn btn-danger rank-btn" style="float: center;" id="rank-down">
+            <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="btn btn-default rank-btn" style="float: center;" onclick="show_next_card();">
+            <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>
+          </button>
+      </div>
+    </div> <!-- end div main -->
+  {% endblock %}
 
-{% block scripts %}
-  <script type="text/javascript">
+  {% block scripts %}
+
+    <!-- pseudocode -->
+    <script type="text/javascript" src="{% static 'definitions/js/jquery-pseudocode.js' %}"></script>
+
+    <script type="text/javascript">
       $('.rank-btn').hide()
       $('#edit').hide()
       $('#show_def').click(function() {
 
-          // remove button to show definition
-          $('#show_def').remove();
+        // remove button to show definition
+        $('#show_def').remove();
 
-          // show card data
-          {% autoescape off %}
+        // show card data
+        {% autoescape off %}
           $("#data").append("{{ card.clean_definition }}");
           $("#data").append("<br><hr>");
           {% for tag in card.tags.all %}
-          $("#data").append('<span class="label label-success">{{ tag }}</span> ');
+            $("#data").append('<span class="label label-success">{{ tag }}</span> ');
           {% endfor %}
+        {% endautoescape %}
 
-          {% endautoescape %}
+        // style up card
+        $('#def').addClass('def');
 
-          // style up card
-          $('#def').addClass('def');
+        // Typeset pseudocode
+        var ps = $('.pseudocode');
+        if (ps.length) {
+          ps.attr('style', 'white-space: pre');
+          ps.pseudocode(
+            {
+              keywords: {
+                'for': '#990000',
+                'foreach': '#990000',
+                'function': '#990000',
+                'if': '#990000',
+                'else': '#990000',
+                'procedure': '#990000',
+                'return': '#990000',
+                'this': '#990000',
+                'var': '#990000',
+                'while': '#990000',
+                'False': '#990000',
+                'True': '#990000',
+              },
+            }
+          );
+        }
 
-          // Typeset math
-          MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
+        // Typeset math
+        MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
 
-          // show buttons
-          $('.rank-btn').show()
-          $('#edit').show()
+        // show buttons
+        $('.rank-btn').show()
+
+        // make a little pause, so user can't accidentally re-click
+        // button and suddenly be on edit mode
+        setTimeout(function() { $('#edit').show(); }, 2000);
+
       });
 
       function show_next_card() {
-          location.href =  "{% url 'next_card' card.id %}";
+        location.href =  "{% url 'next_card' card.id %}";
       }
 
       function show_prev_card() {
-          location.href =  "{% url 'prev_card' card.id %}";
+        location.href =  "{% url 'prev_card' card.id %}";
       }
 
       $('#rank-up').click(function() {
-          $.ajax({
-            url: "/concepts/rank-up/{{ card.id }}/",
-          }).done(function() {
-              show_next_card();
-          });
+        $.ajax({
+          url: "/concepts/rank-up/{{ card.id }}/",
+        }).done(function() {
+          show_next_card();
+        });
       });
       $('#rank-down').click(function() {
-          $.ajax({
-            url: "/concepts/rank-down/{{ card.id }}/",
-          }).done(function() {
-              show_next_card();
-          });
+        $.ajax({
+          url: "/concepts/rank-down/{{ card.id }}/",
+        }).done(function() {
+          show_next_card();
+        });
       });
-  </script>
+    </script>
 
-  {% load mathjax %}
-  {% mathjax_scripts %}
-{% endblock %}
+    {% load mathjax %}
+    {% mathjax_scripts %}
+  {% endblock %}

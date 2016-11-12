@@ -111,7 +111,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = '/home/marcos/Code/nerdhelp/static/'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = ''
+MEDIA_ROOT = '/home/marcos/Code/nerdhelp/media/'
 
 MATHJAX_ENABLED = True
 MATHJAX_LOCAL_PATH = 'definitions/js/MathJax'
@@ -139,10 +139,15 @@ MATHJAX_CONFIG_DATA = {
 CKEDITOR_JQUERY_URL = '/static/definitions/js/jquery.min.js'
 
 CKEDITOR_CONFIGS = {
+
     'default': {
-        'mathJaxLib': '/static/{}/MathJax.js?config={}'.format(
-            MATHJAX_LOCAL_PATH,
-            MATHJAX_CONFIG_FILE
-        ),
-    }
+        'toolbar': None,
+    },
+#    'default': {
+#        'mathJaxLib': '/static/{}/MathJax.js?config={}'.format(
+#            MATHJAX_LOCAL_PATH,
+#            MATHJAX_CONFIG_FILE
+#        ),
+#    }
 }
+
