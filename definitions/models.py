@@ -48,6 +48,7 @@ class Concept(models.Model):
     DEFINITION = 'D'
     EXAMPLE = 'E'
     PROBLEM = 'P'
+    COROLLARY = 'C'
 
 
     TYPE_OF_CARD = (
@@ -56,6 +57,7 @@ class Concept(models.Model):
         (DEFINITION, u'Definición'),
         (EXAMPLE, 'Ejemplo'),
         (PROBLEM, 'Problema'),
+        (COROLLARY, 'Corolario'),
     )
 
     name = models.CharField(max_length=500)

@@ -32,6 +32,8 @@ from definitions.pdfutils import concepts2pdf
 COURSE = 'C'
 TYPE = 'T'
 TAG = 'E'
+LAST_RANDOM_CARD = None
+
 
 def prev_card(_, card_id):
     """Show prev card, according to current filters"""
@@ -42,6 +44,7 @@ def prev_card(_, card_id):
         card = concepts[0]
     return redirect('view_card', card.id)
 
+
 def next_card(_, card_id):
     """Show next card, according to current filters"""
     concepts = get_concepts_applying_filters().order_by('pk')
@@ -51,10 +54,12 @@ def next_card(_, card_id):
         card = concepts[0]
     return redirect('view_card', card.id)
 
+
 def get_tags(_):
     """return json with tagnames"""
     return HttpResponse(json.dumps(sorted([t.name for t in Tag.objects.all()])),
                         content_type="application/json")
+
 
 @csrf_exempt
 @ajax
@@ -67,6 +72,7 @@ def set_filter(request):
         f, _ = Filter.objects.get_or_create(visible_name=name, value=value)
         f.active = state
         f.save()
+
 
 @csrf_exempt
 def autocomplete(request):
@@ -274,10 +280,14 @@ def get_concepts_applying_filters():
 def random_card(_):
     """Show random concept"""
     concepts = get_concepts_applying_filters()
+    global LAST_RANDOM_CARD
+    if LAST_RANDOM_CARD and concepts.count() > 1:
+        print LAST_RANDOM_CARD
+        concepts = concepts.exclude(pk=LAST_RANDOM_CARD)
     concepts = concepts.order_by('learning_coeff')
-    if len(concepts) > 20:
-        concepts = concepts[:20]
+    concepts = concepts[:10]
     card = random.choice(concepts)
+    LAST_RANDOM_CARD = card.id
     return redirect('view_card', card.id)
 
 def rank_up(_, concept_id):

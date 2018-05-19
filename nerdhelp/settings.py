@@ -131,6 +131,7 @@ MATHJAX_CONFIG_DATA = {
         },
         'extensions': [
             'action.js',
+            'mathsrc.js',
         ]
     }
 }
