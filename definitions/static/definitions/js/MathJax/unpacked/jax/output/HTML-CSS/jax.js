@@ -11,7 +11,7 @@
  *  
  *  ---------------------------------------------------------------------
  *  
- *  Copyright (c) 2009-2015 The MathJax Consortium
+ *  Copyright (c) 2009-2018 The MathJax Consortium
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@
 
 (function (AJAX,HUB,HTMLCSS) {
   var MML, isMobile = HUB.Browser.isMobile;
+  var isArray = MathJax.Object.isArray;
 
   var MESSAGE = function () {
     var data = [].slice.call(arguments,0);
@@ -56,6 +57,7 @@
         }},[["div",{
           id: "MathJax_Font_Test",
           style: {position:"absolute", visibility:"hidden", top:0, left:0, width: "auto",
+                  "min-width": 0, "max-width": "none",
                   padding:0, border:0, margin:0, whiteSpace:"nowrap",
                   textAlign:"left", textIndent:0, textTransform:"none",
                   lineHeight:"normal", letterSpacing:"normal", wordSpacing:"normal",
@@ -103,7 +105,7 @@
       //  This should be removed when the web fonts are fixed.  FIXME
       //
       var family = font.familyFixed || font.family;
-      if (!family.match(/^(STIX|MathJax)|'/)) {
+      if (!font.isWebFont && !family.match(/^(STIX|MathJax)|'/)) {
         family = family.replace(/_/g," ").replace(/([a-z])([A-Z])/g,"$1 $2").replace(/ Jax/,"Jax")
                + "','" + family + "','" + family + "-";
         if (font.weight) {family += "Bold"}; if (font.style) {family += "Italic"}
@@ -196,7 +198,7 @@
     },
     loadError: function (font) {
       MESSAGE(["CantLoadWebFont","Can't load web font %1",HTMLCSS.fontInUse+"/"+font.directory],null,2000);
-      HUB.Startup.signal.Post(["HTML-CSS Jax - web font error",HTMLCSS.fontInUse+"/"+font.directory,font]);
+      HUB.Startup.signal.Post("HTML-CSS Jax - web font error for " + HTMLCSS.fontInUse+"/"+font.directory);
     },
     firefoxFontError: function (font) {
       MESSAGE(["FirefoxCantLoadWebFont","Firefox can't load web fonts from a remote host"],null,3000);
@@ -213,6 +215,7 @@
       var type = HTMLCSS.allowWebFonts;
       var FONT = HTMLCSS.FONTDATA.FONTS[name];
       if (HTMLCSS.msieFontCSSBug && !FONT.family.match(/-Web$/)) {FONT.family += "-Web"}
+      if (FONT.isWebFont) delete FONT.familyFixed;
       var webfonts = HTMLCSS.webfontDir+"/"+type;
       var dir = AJAX.fileURL(webfonts);
       var fullname = name.replace(/-b/,"-B").replace(/-i/,"-I").replace(/-Bold-/,"-Bold");
@@ -240,6 +243,8 @@
   
   var EVENT, TOUCH, HOVER; // filled in later
 
+  var oldIE = MathJax.Hub.Browser.isMSIE && (document.documentMode||0) < 8;
+
   HTMLCSS.Augment({
     config: {
       styles: {
@@ -264,6 +269,11 @@
           border: 0, padding: 0, margin: 0
         },
 
+        // Focus elements for keyboard tabbing.
+        ".MathJax:focus, body :focus .MathJax": {
+          display:"inline-table" // see issues #1282 and #1338
+        },
+
         ".MathJax_Display": {
           position: "relative",
           display: "block!important",
@@ -271,6 +281,12 @@
           "max-width": "none", "max-height": "none",
           "min-width": 0, "min-height": 0,
           width: "100%"
+        },
+        
+        ".MathJax.MathJax_FullWidth": {
+          "text-align": "center",
+          display: (oldIE ? "block" : "table-cell") + "!important",
+          width: (oldIE ? "100%" : "10000em") + "!important"
         },
 
         ".MathJax img, .MathJax nobr, .MathJax a": {
@@ -289,7 +305,8 @@
 	  display: "inline", position: "static",
 	  border: 0, padding: 0, margin: 0,
 	  "vertical-align": 0, "line-height": "normal",
-	  "text-decoration": "none"
+	  "text-decoration": "none",
+          "box-sizing": "content-box"
 	},
 
         ".MathJax nobr": {
@@ -325,6 +342,15 @@
           width:"1px", height:"60em",
           "min-height": 0, "max-height":"none"
         },
+        ".MathJax_LineBox": {
+          display: (oldIE ? "block" : "table") + "!important"
+        },
+        ".MathJax_LineBox span": {
+          display: (oldIE ? "block" : "table-cell") + "!important",
+          width: (oldIE ? "100%" : "10000em") + "!important",
+          "min-width":0, "max-width":"none",
+          padding:0, border:0, margin:0
+        },
         
         ".MathJax .MathJax_HitBox": {
           cursor: "text",
@@ -334,7 +360,7 @@
         ".MathJax .MathJax_HitBox *": {
           filter: "none", opacity:1, background:"transparent" // for IE
         },
-        
+
         "#MathJax_Tooltip": {
           position: "absolute", left: 0, top: 0,
           width: "auto", height: "auto",
@@ -343,7 +369,7 @@
         "#MathJax_Tooltip *": {
           filter: "none", opacity:1, background:"transparent" // for IE
         },
-        
+
         //
         //  Used for testing web fonts against the default font used while
         //  web fonts are loading
@@ -393,7 +419,7 @@
       if (settings.scale) {config.scale = settings.scale}
       if (font && font !== "Auto" && this.fontName[font]) {
         config.availableFonts = []; delete config.fonts;
-        if (this.fontName[font] instanceof Array) {
+        if (isArray(this.fontName[font])) {
           config.preferredFont = this.fontName[font][0];
           config.webFont = this.fontName[font][1];
         } else {
@@ -476,8 +502,7 @@
       );
 
       // Used in preTranslate to get linebreak width
-      this.linebreakSpan = this.Element("span",null,
-        [["hr",{style: {width:"100%", size:1, padding:0, border:0, margin:0}}]]);
+      this.linebreakSpan = MathJax.HTML.Element("span",{className:"MathJax_LineBox"},[["span"]]);
 
       // Set up styles and preload web fonts
       return AJAX.Styles(this.config.styles,["InitializeHTML",this]);
@@ -557,19 +582,23 @@
         //  Remove any existing output
         //
         prev = script.previousSibling;
-        if (prev && String(prev.className).match(/^MathJax(_Display)?( MathJax_Processing)?$/))
+        if (prev && String(prev.className).match(/^MathJax(_Display)?( MathJax_Process(ing|ed))?$/))
           {prev.parentNode.removeChild(prev)}
+        if (script.MathJax.preview) script.MathJax.preview.style.display = "none";
         //
         //  Add the span, and a div if in display mode,
-        //  then set the role and mark it as being processed
+        //  then mark it as being processed
         //
         jax = script.MathJax.elementJax; if (!jax) continue;
         jax.HTMLCSS = {display: (jax.root.Get("display") === "block")}
         span = div = this.Element("span",{
 	  className:"MathJax", id:jax.inputID+"-Frame", isMathJax:true, jaxID:this.id,
           oncontextmenu:EVENT.Menu, onmousedown: EVENT.Mousedown,
-          onmouseover:EVENT.Mouseover, onmouseout:EVENT.Mouseout, onmousemove:EVENT.Mousemove,
-	  onclick:EVENT.Click, ondblclick:EVENT.DblClick
+          onmouseover:EVENT.Mouseover, onmouseout:EVENT.Mouseout,
+          onmousemove:EVENT.Mousemove, onclick:EVENT.Click,
+          ondblclick:EVENT.DblClick,
+          // Added for keyboard accessible menu.
+          onkeydown: EVENT.Keydown, tabIndex: HUB.getTabOrder(jax)
         });
 	if (HUB.Browser.noContextMenu) {
 	  span.ontouchstart = TOUCH.start;
@@ -581,6 +610,7 @@
         } else if (this.msieDisappearingBug) {span.style.display = "inline-block"}
         div.className += " MathJax_Processing";
         script.parentNode.insertBefore(div,script);
+        jax.HTMLCSS.span = span; jax.HTMLCSS.div = div;  // save for use in Translate()
         //
         //  Add the test span for determining scales and linebreak widths
         //
@@ -600,15 +630,14 @@
         jax = script.MathJax.elementJax; if (!jax) continue;
         ex = test.firstChild.offsetHeight/60;
         em = test.lastChild.firstChild.offsetHeight/60;
-        cwidth = div.previousSibling.firstChild.offsetWidth;
-        if (relwidth) {maxwidth = cwidth}
+        cwidth = Math.max(0,div.previousSibling.firstChild.offsetWidth - 2);
         if (ex === 0 || ex === "NaN") {
           // can't read width, so move to hidden div for processing
           hidden.push(div);
           jax.HTMLCSS.isHidden = true;
           ex = this.defaultEx; em = this.defaultEm; cwidth = this.defaultWidth;
-          if (relwidth) {maxwidth = cwidth}
         }
+        if (relwidth) {maxwidth = cwidth}
         scale = (this.config.matchFontHeight ? ex/this.TeX.x_height/em : 1);
         scale = Math.floor(Math.max(this.config.minScaleAdjust/100,scale)*this.config.scale);
         jax.HTMLCSS.scale = scale/100; jax.HTMLCSS.fontSize = scale+"%";
@@ -631,6 +660,7 @@
         if (!jax.HTMLCSS.isHidden) {span = span.previousSibling}
         span.parentNode.removeChild(span);
         test.parentNode.removeChild(test);
+        if (script.MathJax.preview) script.MathJax.preview.style.display = "";
       }
       //
       //  Set state variables used for displaying equations in chunks
@@ -657,9 +687,8 @@
       //  Get the data about the math
       //
       var jax = script.MathJax.elementJax, math = jax.root,
-          span = document.getElementById(jax.inputID+"-Frame"),
-          div = (jax.HTMLCSS.display ? (span||{}).parentNode : span);
-      if (!div) return;
+          div = jax.HTMLCSS.div, span = jax.HTMLCSS.span;
+      if (!document.getElementById(span.id)) return;
       //
       //  Set the font metrics
       //
@@ -673,7 +702,6 @@
       this.savePreview(script);
       try {
         math.setTeXclass();
-        jax.HTMLCSS.span = span; jax.HTMLCSS.div = div;  // save for phase II and III
         math.toHTML(span,div,this.PHASE.I);
       } catch (err) {
         if (err.restart) {while (span.firstChild) {span.removeChild(span.firstChild)}}
@@ -736,10 +764,13 @@
       //
       for (i = state.HTMLCSSlast, m = state.HTMLCSSeqn; i < m; i++) {
         script = scripts[i];
-        if (script && script.MathJax.elementJax) {
-          var div = script.MathJax.elementJax.HTMLCSS.div;
-          div.className = div.className.split(/ /)[0];
-          if (script.MathJax.preview) {script.MathJax.preview.innerHTML = ""}
+        if (script && script.parentNode && script.MathJax.elementJax) {
+          var div = (script.MathJax.elementJax.HTMLCSS||{}).div;
+          if (div) {div.className = div.className.split(/ /)[0]}
+          if (script.MathJax.preview) {
+            script.MathJax.preview.innerHTML = "";
+            script.MathJax.preview.style.display = "none";
+          }
         }
       }
       //
@@ -747,9 +778,10 @@
       //
       for (i = state.HTMLCSSlast, m = state.HTMLCSSeqn; i < m; i++) {
         script = scripts[i];
-        if (script && script.MathJax.elementJax) {
+        if (script && script.parentNode && script.MathJax.elementJax) {
           jax = script.MathJax.elementJax; this.getMetrics(jax);
-          jax.root.toHTML(jax.HTMLCSS.span,jax.HTMLCSS.div,this.PHASE.II);
+          if (jax.HTMLCSS.span && jax.HTMLCSS.div) 
+            jax.root.toHTML(jax.HTMLCSS.span,jax.HTMLCSS.div,this.PHASE.II);
         }
       }
       //
@@ -757,19 +789,21 @@
       //
       for (i = state.HTMLCSSlast, m = state.HTMLCSSeqn; i < m; i++) {
         script = scripts[i];
-        if (script && script.MathJax.elementJax) {
+        if (script && script.parentNode && script.MathJax.elementJax) {
           //
           //  Finish the math with its measured size (toHTML phase III)
           //
           jax = script.MathJax.elementJax; this.getMetrics(jax);
-          jax.root.toHTML(jax.HTMLCSS.span,jax.HTMLCSS.div,this.PHASE.III);
-          if (jax.HTMLCSS.isHidden) script.parentNode.insertBefore(jax.HTMLCSS.div,script);
-          delete jax.HTMLCSS.span; delete jax.HTMLCSS.div;
-          //
-          //  The math is now fully processed
-          //
-          script.MathJax.state = jax.STATE.PROCESSED;
-          HUB.signal.Post(["New Math",script.MathJax.elementJax.inputID]); // FIXME: wait for this?  (i.e., restart if returns uncalled callback)
+          if (jax.HTMLCSS.span && jax.HTMLCSS.div) {
+            jax.root.toHTML(jax.HTMLCSS.span,jax.HTMLCSS.div,this.PHASE.III);
+            if (jax.HTMLCSS.isHidden) script.parentNode.insertBefore(jax.HTMLCSS.div,script);
+            delete jax.HTMLCSS.span; delete jax.HTMLCSS.div;
+            //
+            //  The math is now fully processed
+            //
+            script.MathJax.state = jax.STATE.PROCESSED;
+            HUB.signal.Post(["New Math",script.MathJax.elementJax.inputID]); // FIXME: wait for this?  (i.e., restart if returns uncalled callback)
+          }
         }
       }
       if (this.forceReflow) {
@@ -785,7 +819,7 @@
     },
     
     getJaxFromMath: function (math) {
-      if (math.parentNode.className === "MathJax_Display") {math = math.parentNode}
+      if (math.parentNode.className.match(/MathJax_Display/)) {math = math.parentNode}
       do {math = math.nextSibling} while (math && math.nodeName.toLowerCase() !== "script");
       return HUB.getJaxFor(math);
     },
@@ -998,8 +1032,8 @@
       return m.toFixed(3).replace(/\.?0+$/,"") + "em";
     },
     EmRounded: function (m) {
-      m = (Math.round(m*HTMLCSS.em)+.05)/HTMLCSS.em;
       if (Math.abs(m) < .0006) {return "0em"}
+      m = (Math.round(m*HTMLCSS.em)+.05)/HTMLCSS.em;
       return m.toFixed(3).replace(/\.?0+$/,"") + "em";
     },
     unEm: function (m) {
@@ -1042,9 +1076,15 @@
     thickness2em: function (length,mu) {
       var thick = HTMLCSS.TeX.rule_thickness;
       if (length === MML.LINETHICKNESS.MEDIUM) {return thick}
-      if (length === MML.LINETHICKNESS.THIN) {return .67*thick}
-      if (length === MML.LINETHICKNESS.THICK) {return 1.67*thick}
+      if (length === MML.LINETHICKNESS.THIN)   {return .67*thick}
+      if (length === MML.LINETHICKNESS.THICK)  {return 1.67*thick}
       return this.length2em(length,mu,thick);
+    },
+    border2em: function (length,mu) {
+      if (length === MML.LINETHICKNESS.THIN)   {length = "1px"}
+      if (length === MML.LINETHICKNESS.MEDIUM) {length = "3px"}
+      if (length === MML.LINETHICKNESS.THICK)  {length = "5px"}
+      return this.length2em(length,mu);
     },
     
     getPadding: function (span) {
@@ -1062,7 +1102,7 @@
         var style = span.style[ID+"Style"];
         if (style) {
           has = true;
-          border[id] = this.length2em(span.style[ID+"Width"]);
+          border[id] = this.border2em(span.style[ID+"Width"] || MML.LINETHICKNESS.MEDIUM);
           css[ID] = [span.style[ID+"Width"],span.style[ID+"Style"],span.style[ID+"Color"]].join(" ");
         }
       }}
@@ -1135,14 +1175,20 @@
       if (w > 0 && w*this.em < min) {w = min/this.em}
       if (h+d > 0 && (h+d)*this.em < min) {f = 1/(h+d)*(min/this.em); h *= f; d *= f}
       if (!color) {color = "solid"} else {color = "solid "+color}
-      color = this.Em(w)+" "+color;
-      var H = (f === 1 ? this.Em(h+d) : min+"px"), D = this.Em(-d);
+      var style = {display: "inline-block", overflow:"hidden", verticalAlign:this.Em(-d)};
+      if (w > h+d) {
+        style.borderTop = this.Px(h+d)+" "+color;
+        style.width = this.Em(w);
+        style.height = (this.msieRuleBug && h+d > 0 ? this.Em(h+d) : 0);
+      } else {
+        style.borderLeft = this.Px(w)+" "+color;
+        style.width = (this.msieRuleBug && w > 0 ? this.Em(w) : 0);
+        style.height = this.Em(h+d);
+      }
       var rule = this.addElement(span,"span",{
-        style: {borderLeft: color, display: "inline-block", overflow:"hidden",
-                width:0, height:H, verticalAlign:D},
-        bbox: {h:h, d:d, w:w, rw:w, lw:0, exactW:true}, noAdjust:true, HH:h+d, isMathJax:true
+        style: style, noAdjust:true, HH:h+d, isMathJax:true,
+        bbox: {h:h, d:d, w:w, rw:w, lw:0, exactW:true}
       });
-      if (this.msieRuleBug && w > 0) {rule.style.width = this.Em(w)}
       if (span.isBox || span.className == "mspace") {span.bbox = rule.bbox, span.HH = h+d}
       return rule;
     },
@@ -1152,7 +1198,7 @@
       if (this.msieFrameSizeBug) {if (w < T) {w = T}; if (h+d < T) {h = T-d}}
       if (this.msieBorderWidthBug) {T = 0}
       var H = this.Em(h+d-T), D = this.Em(-d-t), W = this.Em(w-T);
-      var B = this.Em(t)+" "+style;
+      var B = this.Px(t)+" "+style;
       var frame = this.addElement(span,"span",{
         style: {border: B, display:"inline-block", overflow:"hidden", width:W, height:H},
         bbox: {h:h, d:d, w:w, rw:w, lw:0, exactW:true}, noAdjust: true, HH:h+d, isMathJax:true
@@ -1205,9 +1251,14 @@
       if (this.imgSpaceBug) {this.addText(span,this.imgSpace)}
       // Place the box
       var HH, dx = 0;
-      if (span.HH != null) {HH = span.HH}
-        else if (bbox) {HH = Math.max(3,bbox.h+bbox.d)}
-        else {HH = span.offsetHeight/this.em}
+      if (span.HH != null) {
+        HH = span.HH;
+      } else if (bbox) {
+        var child = span.firstChild;
+        HH = Math.max(3,3*(child ? child.scale||1 : 1),bbox.h+bbox.d)
+      } else {
+        HH = span.offsetHeight/this.em;
+      }
       if (!span.noAdjust) {
         HH += 1;
         HH = Math.round(HH*this.em)/this.em; // make this an integer number of pixels (for Chrome)
@@ -1233,7 +1284,7 @@
         if (!this.msieClipRectBug && !bbox.noclip && !noclip) {
           var dd = 3/this.em;
           var H = (bbox.H == null ? bbox.h : bbox.H), D = (bbox.D == null ? bbox.d : bbox.D);
-          var t = HH - H - dd, b = HH + D + dd, l = -1000, r = 1000;
+          var t = HH - H - dd, b = HH + D + dd, l = -1000, r = bbox.rw+1000;
           span.style.clip = "rect("+this.Em(t)+" "+this.Em(r)+" "+this.Em(b)+" "+this.Em(l)+")";
         }
       }
@@ -1264,7 +1315,7 @@
         if (bbox.tw) {BBOX.tw = bbox.tw}
       }
     },
-    alignBox: function (span,align,y,dx) {
+    alignBox: function (span,align,y,dx,noskip) {
       if (dx == null) {dx = 0}
       this.placeBox(span,dx,y); // set y position (and left aligned)
       if (this.msiePlaceBoxBug) {
@@ -1275,7 +1326,7 @@
         while (node && node.nodeName !== "#text") {node = node.previousSibling}
         if (node) {span.removeChild(node)}
       }
-      var bbox = span.bbox; if (bbox.isMultiline) return;
+      var bbox = span.bbox; if (bbox.isMultiline && !noskip) return;
       var isRelative = bbox.width != null && !bbox.isFixed;
       var r = 0, c = dx-bbox.w/2, l = "50%";
       if (this.initialSkipBug) {r = bbox.w-bbox.rw-.1; c += bbox.lw}
@@ -1414,12 +1465,13 @@
         if (delim.mid) {this.placeBox(mid,x,0,true); x += mid.bbox.w};
         x -= (w - W)/2;
       }
+      x -= right.bbox.lw;
       this.placeBox(right,x,0,true);
       span.bbox = {
         w: x+right.bbox.rw, lw: 0, rw: x+right.bbox.rw,
-        H: Math.max(left.bbox.h,rep.bbox.h,right.bbox.h,mid.bbox.h),
-        D: Math.max(left.bbox.d,rep.bbox.d,right.bbox.d,mid.bbox.d),
-        h: rep.bbox.h, d: rep.bbox.d, exactW: true
+        h: Math.max(left.bbox.h,rep.bbox.h,right.bbox.h,mid.bbox.h),
+        d: Math.max(left.bbox.d,rep.bbox.d,right.bbox.d,mid.bbox.d),
+        exactW: true
       }
       span.scale = scale;
       span.isMultiChar = true;
@@ -1512,7 +1564,7 @@
         } else if (this.FONTDATA.REMAP[n] && !variant.noRemap) {
           n = this.FONTDATA.REMAP[n];
         }
-        if (n instanceof Array) {variant = this.FONTDATA.VARIANT[n[1]]; n = n[0]} 
+        if (isArray(n)) {variant = this.FONTDATA.VARIANT[n[1]]; n = n[0]} 
         if (typeof(n) === "string") {
           text = n+text.substr(i+1);
           m = text.length; i = -1;
@@ -1548,8 +1600,9 @@
       var weight = (style.fontWeight||"normal");
       if (weight.match(/^\d+$/)) {weight = (parseInt(weight) >= 600 ? "bold" : "normal")}
       return (font.family.replace(/'/g,"") === style.fontFamily.replace(/'/g,"") &&
-             (font.style||"normal") === (style.fontStyle||"normal") &&
-             (font.weight||"normal") === weight);
+             (((font.style||"normal") === (style.fontStyle||"normal") &&
+             (font.weight||"normal") === weight) ||
+             (this.FontFaceBug && style.fontFamily !== '')));
     },
 
     handleFont: function (span,font,force) {
@@ -1591,8 +1644,14 @@
               + String.fromCharCode((N&0x3FF)+0xDC00);
         }
       }
+      if (HTMLCSS.ffFontOptimizationBug && c[4] - c[2] > 125)
+        {span.style.textRendering = "optimizeLegibility"}
       if (C.rfix) {this.addText(span,text+C.c); HTMLCSS.createShift(span,C.rfix/1000); return ""}
-      if (c[2] || !this.msieAccentBug || text.length) {return text + C.c}
+      if (c[2] || (!this.msieAccentBug && !this.combiningCharBug) || text.length) {return text + C.c}
+      if (this.combiningCharBug) {
+        HTMLCSS.addElement(span,"span",{style: {marginLeft:HTMLCSS.Em(c[3]/1000)}},[C.c]);
+        return "";
+      }
       //  Handle IE accent clipping bug
       HTMLCSS.createShift(span,c[3]/1000);
       HTMLCSS.createShift(span,(c[4]-c[3])/1000);
@@ -1771,6 +1830,7 @@
           bbox = stretchy[i].HTMLspanElement().bbox;
           if (stretchy[i].forceStretch || bbox.h !== h || bbox.d !== d)
             {stretchy[i].HTMLstretchV(span,h,d); stretched = true}
+          else if (stretchy[i].needsBBox) stretched = true;
         }
 	if (stretched) {this.HTMLcomputeBBox(span,true)}
         if (this.HTMLlineBreaks(span)) {span = this.HTMLmultiline(span)}
@@ -1790,8 +1850,11 @@
 	var BBOX = span.bbox = {exactW: true}, stretchy = [];
 	while (i < m) {
 	  var core = this.data[i]; if (!core) continue;
-	  if (!full && core.HTMLcanStretch("Vertical"))
-	    {stretchy.push(core); core = (core.CoreMO()||core)}
+	  if (!full && core.HTMLcanStretch("Vertical")) {
+            stretchy.push(core);
+            core = (core.CoreMO()||core);
+            stretchy[stretchy.length-1].needsBBox = (core !== this.data[i]);
+          }
 	  this.HTMLcombineBBoxes(core,BBOX); i++;
 	}
 	this.HTMLcleanBBox(BBOX);
@@ -1886,8 +1949,8 @@
       HTMLaddAttributes: function(span) {
         //
         //  Copy RDFa, aria, and other tags from the MathML to the HTML-CSS
-        //  output spans Don't copy those in the MML.nocopyAttributes list,
-        //  the ignoreMMLattributes configuration list, or anything tha
+        //  output spans.  Don't copy those in the MML.nocopyAttributes list,
+        //  the ignoreMMLattributes configuration list, or anything that
         //  already exists as a property of the span (e.g., no "onlick", etc.)
         //  If a name in the ignoreMMLattributes object is set to false, then
         //  the attribute WILL be copied.
@@ -2107,13 +2170,42 @@
           variant = "normal";
         }
         return HTMLCSS.FONTDATA.VARIANT[variant];
+      },
+      
+      HTMLdrawBBox: function (span) {
+        var bbox = span.bbox;
+        var box = HTMLCSS.Element("span",
+          {style:{"font-size":span.style.fontSize, display:"inline-block",
+                  opacity:.25,"margin-left":HTMLCSS.Em(-bbox.w)}},[
+          ["span",{style:{
+            height:HTMLCSS.Em(bbox.h),width:HTMLCSS.Em(bbox.w),
+            "background-color":"red", display:"inline-block"
+          }}],
+          ["span",{style:{
+            height:HTMLCSS.Em(bbox.d),width:HTMLCSS.Em(bbox.w),
+            "margin-left":HTMLCSS.Em(-bbox.w),"vertical-align":HTMLCSS.Em(-bbox.d),
+            "background-color":"green", display:"inline-block"
+          }}]
+        ]);
+        if (span.nextSibling) {span.parentNode.insertBefore(box,span.nextSibling)}
+          else {span.parentNode.appendChild(box)}
       }
+
     },{
       HTMLautoload: function () {
+        this.constructor.Augment({toHTML: MML.mbase.HTMLautoloadFail});
 	var file = HTMLCSS.autoloadDir+"/"+this.type+".js";
 	HUB.RestartAfter(AJAX.Require(file));
       },
+      HTMLautoloadFail: function () {
+        throw Error("HTML-CSS can't autoload '"+ this.type + "'");
+      },
+      HTMLautoloadList: {},
       HTMLautoloadFile: function (name) {
+        if (MML.mbase.HTMLautoloadList.hasOwnProperty(name)) {
+          throw Error("HTML-CSS can't autoload file '"+name+"'");
+        }
+        MML.mbase.HTMLautoloadList[name] = true;
 	var file = HTMLCSS.autoloadDir+"/"+name+".js";
 	HUB.RestartAfter(AJAX.Require(file));
       },
@@ -2186,11 +2278,17 @@
     });
 
     MML.mn.Augment({
+      HTMLremapMinus: function (text) {return text.replace(/^-/,"\u2212")},
       toHTML: function (span) {
 	span = this.HTMLhandleSize(this.HTMLcreateSpan(span)); span.bbox = null;
 	var variant = this.HTMLgetVariant();
-	for (var i = 0, m = this.data.length; i < m; i++)
-	  {if (this.data[i]) {this.data[i].toHTML(span,variant)}}
+        var remap = this.HTMLremapMinus;
+	for (var i = 0, m = this.data.length; i < m; i++) {
+          if (this.data[i]) {
+            this.data[i].toHTML(span,variant,remap);
+            remap = null;
+          }
+        }
 	if (!span.bbox) {span.bbox = this.HTMLzeroBBox()}
 	if (this.data.join("").length !== 1) {delete span.bbox.skew}
 	this.HTMLhandleSpace(span);
@@ -2236,12 +2334,16 @@
           {if (this.data[i]) {this.data[i].toHTML(span,variant,this.remap,mapchars)}}
 	if (!span.bbox) {span.bbox = this.HTMLzeroBBox()}
 	if (text.length !== 1) {delete span.bbox.skew}
+
         //
-        //  Handle combining characters by adding a non-breaking space and removing that width
+        //  Handle combining character bugs
         //
 	if (HTMLCSS.AccentBug && span.bbox.w === 0 && text.length === 1 && span.firstChild) {
-	  span.firstChild.nodeValue += HTMLCSS.NBSP;
-	  HTMLCSS.createSpace(span,0,0,-span.offsetWidth/HTMLCSS.em);
+          //
+          //  adding a non-breaking space and removing that width
+          //
+          span.firstChild.nodeValue += HTMLCSS.NBSP;
+          HTMLCSS.createSpace(span,0,0,-span.offsetWidth/HTMLCSS.em);
 	}
         //
         //  Handle large operator centering
@@ -2528,8 +2630,8 @@
 	    HTMLCSS.createRule(rule,t,0,W+2*t);
 	    HTMLCSS.placeBox(rule,0,a-t/2);
 	  }
-	  HTMLCSS.alignBox(num,values.numalign,u);
-	  HTMLCSS.alignBox(den,values.denomalign,-v);
+	  HTMLCSS.alignBox(num,values.numalign,u,0,true);
+	  HTMLCSS.alignBox(den,values.denomalign,-v,0,true);
 	}
 	this.HTMLhandleSpace(span);
 	this.HTMLhandleColor(span);
@@ -2537,7 +2639,7 @@
       },
       HTMLcanStretch: function (direction) {return false},
       HTMLhandleSpace: function (span) {
-	if (!this.texWithDelims && !this.useMMLspacing) {
+	if (!this.texWithDelims) {
           //
           //  Add nulldelimiterspace around the fraction
           //  (TeXBook pg 150 and Appendix G rule 15e)
@@ -2545,7 +2647,7 @@
           var space = HTMLCSS.TeX.nulldelimiterspace * this.mscale;
           var style = span.childNodes[HTMLCSS.msiePaddingWidthBug ? 1 : 0].style;
           style.marginLeft = style.marginRight = HTMLCSS.Em(space);
-          span.bbox.w += 2*space; span.bbox.r += 2*space;
+          span.bbox.w += 2*space; span.bbox.rw += 2*space;
 	}
         this.SUPER(arguments).HTMLhandleSpace.call(this,span);
       }
@@ -2571,8 +2673,8 @@
 	if (surd.isMultiChar || (HTMLCSS.AdjustSurd && HTMLCSS.imgFonts)) {surd.bbox.w *= .95}
 	if (surd.bbox.h + surd.bbox.d > H) {q = ((surd.bbox.h+surd.bbox.d) - (H-t))/2}
 	var ruleC = HTMLCSS.FONTDATA.DELIMITERS[HTMLCSS.FONTDATA.RULECHAR];
-	if (!ruleC || W < ruleC.HW[0][0]*scale || scale < .75) {
-	  HTMLCSS.createRule(rule,0,t,W);
+	if (!ruleC || W < (ruleC.HW[0]||[0])[0]*scale || scale < .75) {
+	  HTMLCSS.createRule(rule,0,t,W); rule.bbox.h = -t;
 	} else {
 	  HTMLCSS.createDelimiter(rule,HTMLCSS.FONTDATA.RULECHAR,W,scale);
 	}
@@ -2674,8 +2776,9 @@
     MML.munderover.Augment({
       toHTML: function (span,HW,D) {
 	var values = this.getValues("displaystyle","accent","accentunder","align");
-	if (!values.displaystyle && this.data[this.base] != null &&
-	    this.data[this.base].CoreMO().Get("movablelimits"))
+        var base = this.data[this.base];
+	if (!values.displaystyle && base != null &&
+	    (base.movablelimits || base.CoreMO().Get("movablelimits")))
 	      {return MML.msubsup.prototype.toHTML.call(this,span)}
 	span = this.HTMLcreateSpan(span); var scale = this.HTMLgetScale();
 	var stack = HTMLCSS.createStack(span);
@@ -2689,6 +2792,9 @@
 	      else if (HW != null) {this.data[this.base].HTMLstretchH(box,HW)}
 	      stretch[i] = (D == null && HW != null ? false :
 			   this.data[i].HTMLcanStretch("Horizontal"));
+              if (this.data[this.over] && values.accent) {
+                children[i].bbox.h = Math.max(children[i].bbox.h,scale*HTMLCSS.TeX.x_height); // min height of 1ex (#1706)
+              }
 	    } else {
 	      stretch[i] = this.data[i].HTMLcanStretch("Horizontal");
               children[i].style.paddingLeft = children[i].style.paddingRight = "";
@@ -2714,8 +2820,8 @@
           if (box.bbox.w > WW) {WW = box.bbox.w}
         }}
 	var t = HTMLCSS.TeX.rule_thickness * this.mscale, factor = HTMLCSS.FONTDATA.TeX_factor;
-	var base = boxes[this.base] || {bbox: this.HTMLzeroBBox()};
 	var x, y, z1, z2, z3, dw, k, delta = 0;
+	base = boxes[this.base] || {bbox: this.HTMLzeroBBox()};
         if (base.bbox.ic) {delta = 1.3*base.bbox.ic + .05} // adjust faked IC to be more in line with expeted results
 	for (i = 0, m = this.data.length; i < m; i++) {
 	  if (this.data[i] != null) {
@@ -2850,7 +2956,7 @@
     
     MML.math.Augment({
       toHTML: function (span,node,phase) {
-        var stack, box, html, math;
+        var stack, box, html, math, SPAN = span;
         //
         //  Phase I lays out the math, but doesn't measure the final math yet
         //  (that is done for a chunk at a time, to avoid reflows)
@@ -2860,8 +2966,6 @@
           span = this.HTMLcreateSpan(nobr);
           var alttext = this.Get("alttext");
           if (alttext && !span.getAttribute("aria-label")) span.setAttribute("aria-label",alttext);
-          if (!span.getAttribute("role")) span.setAttribute("role","math");
-//        span.setAttribute("tabindex",0);  // causes focus outline, so disable for now
 	  stack = HTMLCSS.createStack(span); box = HTMLCSS.createBox(stack);
           // Move font-size from outer span to stack to avoid line separation 
           // problem in strict HTML mode
@@ -2896,7 +3000,9 @@
           //    Add the width to the span (outside the MathJax class, so uses outer em size,
           //    which makes it work even when minimum font size is in effect).
           //
-          span.style.width = HTMLCSS.Em(Math.max(0,Math.round(math.bbox.w*this.em)+.25)/HTMLCSS.outerEm);
+          var W = math.bbox.w;
+          W = Math.abs(W) < .006 ? 0 : Math.max(0,Math.round(W*this.em)+.25);
+          span.style.width = HTMLCSS.EmRounded(W/HTMLCSS.outerEm);
           span.style.display = "inline-block";
           //
           //  Adjust bbox to match outer em-size
@@ -2910,6 +3016,7 @@
             span.style.minWidth = (math.bbox.minWidth || span.style.width);
             span.style.width = math.bbox.width;
             box.style.width = stack.style.width = "100%";
+            SPAN.className += " MathJax_FullWidth";
           }
           //
           //  Add color (if any)
@@ -2933,13 +3040,12 @@
               var indent = HTMLCSS.length2em(this.displayIndent,1,HTMLCSS.scale*HTMLCSS.cwidth);
               shift += (values.indentalign === MML.INDENTALIGN.RIGHT ? -indent : indent);
             }
-            node.style.textAlign = values.indentalign;
+            SPAN.style.textAlign = node.style.textAlign = values.indentalign;
             // ### FIXME: make percentage widths respond to changes in container
             if (shift) {
-              shift *= HTMLCSS.em/HTMLCSS.outerEm;
               HUB.Insert(span.style,({
                 left: {marginLeft: HTMLCSS.Em(shift)},
-                right: {marginLeft: HTMLCSS.Em(Math.max(0,span.bbox.w+shift)), marginRight: HTMLCSS.Em(-shift)},
+                right: {marginRight: HTMLCSS.Em(-shift)},
                 center: {marginLeft: HTMLCSS.Em(shift), marginRight: HTMLCSS.Em(-shift)}
               })[values.indentalign]);
               //
@@ -2951,7 +3057,7 @@
 	        color.style.marginLeft = HTMLCSS.Em(L);
 	        color.style.marginRight =
 	          HTMLCSS.Em(R + (values.indentalign === "right" ?
-                      Math.min(0,span.bbox.w+shift) - span.bbox.w : 0));
+                      span.bbox.w+shift - span.bbox.w : 0));
 		if (HTMLCSS.msieColorBug && values.indentalign === "right") {
                   if (parseFloat(color.style.marginLeft) > 0) {
                     var padding = MathJax.HTML.addElement(color.parentNode,"span");
@@ -3069,7 +3175,8 @@
         HTMLCSS.Augment({
           ffVerticalAlignBug: !browser.versionAtLeast("20.0"),  // not sure when this bug was fixed
           AccentBug: true,
-          allowWebFonts: webFonts
+          allowWebFonts: webFonts,
+          ffFontOptimizationBug: true
         });
       },
 
@@ -3103,6 +3210,7 @@
           safariTextNodeBug: !v3p0,
           forceReflow: true,
           FontFaceBug: true,
+          combiningCharBug: parseInt(browser.webkit) >= 603,
           allowWebFonts: (v3p1 && !forceImages ? "otf" : false)
         });
         if (trueSafari) {
