@@ -13,7 +13,7 @@ It's focused on organizing your knowledge on cards, tagging them, then using to 
 
 Install [fades](https://github.com/PyAr/fades) (the only dependency)
 
-- Create the contaiers with `make build`
+- Create the containers with `make build`
 - Apply migrations and create superuser with `make bootstrap`
 - Run the app with `make run`
 - Browse localhost:8080
