@@ -82,10 +82,10 @@ WSGI_APPLICATION = 'nerdhelp.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'nerdhelp',
-        'USER': 'root',
-        'PASSWORD': 'nerdhelp',
-        'HOST': '172.17.0.2',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
     }
 }
 
@@ -108,10 +108,10 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = '/home/marcos/Code/nerdhelp/static/'
+STATIC_ROOT = os.getenv('STATIC_ROOT', '/tmp/static')
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = '/home/marcos/Code/nerdhelp/media/'
+MEDIA_ROOT = os.getenv('MEDIA_ROOT', '/tmp/media')
 
 MATHJAX_ENABLED = True
 MATHJAX_LOCAL_PATH = 'definitions/js/MathJax'

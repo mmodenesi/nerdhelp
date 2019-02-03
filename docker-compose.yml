@@ -1,0 +1,35 @@
+version: '3.2'
+services:
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    environment:
+      DB_NAME: nerdhelp
+      DB_USER: nerdhelp
+      DB_PASSWORD: nerdhelp
+      DB_HOST: database
+      MEDIA_ROOT: /app/media/
+    external_links:
+      - database
+    depends_on:
+      - database
+    volumes:
+      - type: volume
+        source: nerdhelp_media
+        target: /app/media
+  database:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: nerdhelp
+      MYSQL_PASSWORD: nerdhelp
+      MYSQL_USER: nerdhelp
+      MYSQL_DATABASE: nerdhelp
+    healthcheck:
+      test: ["CMD-SHELL", 'mysqladmin -u nerdhelp -pnerdhelp ping']
+      interval: 10s
+      timeout: 2s
+      retries: 10
+
+volumes:
+  nerdhelp_media:

@@ -8,3 +8,12 @@ I developed it to organize my own class notes. So authentication mechanism is ab
 It's focused on organizing your knowledge on cards, tagging them, then using to prepare your exams.
 
 ![screenshot_1!](overview_1.png)
+
+## how to use it
+
+Install [fades](https://github.com/PyAr/fades) (the only dependency)
+
+- Create the contaiers with `make build`
+- Apply migrations and create superuser with `make bootstrap`
+- Run the app with `make run`
+- Browse localhost:8080

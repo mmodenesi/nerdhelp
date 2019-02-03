@@ -1,1 +1,0 @@
-para cambiar la configuración de mathjax, tocar el settings del proyecto!!!!
