@@ -30,6 +30,11 @@ services:
       interval: 10s
       timeout: 2s
       retries: 10
+    volumes:
+      - type: volume
+        source: database
+        target: /var/lib/mysql
 
 volumes:
   nerdhelp_media:
+  database:

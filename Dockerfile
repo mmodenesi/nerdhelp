@@ -1,14 +1,15 @@
 FROM python:2.7.15-jessie
 
-COPY ./requirements.txt /app/requirements.txt
-RUN pip install -r /app/requirements.txt
-
-COPY ./manage.py /app/manage.py
-COPY ./definitions /app/definitions
-COPY ./nerdhelp /app/nerdhelp
-COPY ./scripts /app/scripts
-
 WORKDIR /app
+
+RUN apt-get update && \
+    apt-get install texlive-full -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/
+
+COPY . .
+
+RUN pip install -r requirements.txt
 
 EXPOSE 80
 

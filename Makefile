@@ -13,7 +13,10 @@ stop:
 	$(COMPOSE) stop
 
 clean:
-	$(COMPOSE) rm -f -v
+	$(COMPOSE) rm -f
 
 dump:
 	$(COMPOSE) exec database mysqldump -unerdhelp -p nerdhelp
+
+shell:
+	$(COMPOSE) run --rm web python manage.py shell

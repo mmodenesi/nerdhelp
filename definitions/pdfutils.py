@@ -342,7 +342,7 @@ def concepts2pdf(concepts, path):
     """Produce pdf output"""
     latex = concepts2latex(concepts)
     # copy latex for further analisis
-    with open('/home/marcos/source.tex', 'wb') as copy:
+    with open('/tmp/source.tex', 'wb') as copy:
         copy.write(latex.encode('UTF-8'))
     latex2pdf(latex, path)
 
