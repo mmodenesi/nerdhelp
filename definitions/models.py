@@ -102,6 +102,7 @@ class Reaction(models.Model):
     value = models.IntegerField()
     created = models.DateTimeField(editable=False, auto_now_add=True)
 
+
 class Filter(models.Model):
     """
     Filters
@@ -109,5 +110,3 @@ class Filter(models.Model):
     visible_name = models.CharField(max_length=100)
     value = models.CharField(max_length=100)
     active = models.BooleanField(default=True)
-
-

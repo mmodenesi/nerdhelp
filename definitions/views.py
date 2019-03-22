@@ -180,6 +180,7 @@ def add_card(request):
     }
     return render(request, 'definitions/edit_card.html', context)
 
+
 def view_card(request, card_id):
     """Show specific card"""
 
@@ -201,6 +202,7 @@ def view_card(request, card_id):
 
     return render(request, 'definitions/learn.html', context)
 
+
 def edit_card(request, card_id):
     """Edit card"""
     card = get_object_or_404(Concept, pk=card_id)
@@ -211,6 +213,7 @@ def edit_card(request, card_id):
         'tags': Tag.objects.all(),
     }
     return render(request, 'definitions/edit_card.html', context)
+
 
 @ajax
 def save_card(request):
@@ -253,6 +256,7 @@ def save_card(request):
 
         return {"status": 200, "statusText": "OK", 'card_id': card.id}
 
+
 def get_concepts_applying_filters():
     """Apply active filters to show significative concepts"""
     active_filters = Filter.objects.filter(active=True)
@@ -277,6 +281,7 @@ def get_concepts_applying_filters():
         concepts = Concept.objects.all()
     return concepts.distinct().order_by('id')
 
+
 def random_card(_):
     """Show random concept"""
     concepts = get_concepts_applying_filters()
@@ -290,6 +295,7 @@ def random_card(_):
     LAST_RANDOM_CARD = card.id
     return redirect('view_card', card.id)
 
+
 def rank_up(_, concept_id):
     """
     Rank up this concept
@@ -301,6 +307,7 @@ def rank_up(_, concept_id):
     return HttpResponse(json.dumps(dict(result='ok')),
                         content_type="application/json")
 
+
 def rank_down(_, concept_id):
     """
     Rank down this concept
@@ -311,6 +318,7 @@ def rank_down(_, concept_id):
     concept.save()
     return HttpResponse(json.dumps(dict(result='ok')),
                         content_type="application/json")
+
 
 def home(request):
     """
@@ -337,6 +345,7 @@ def view_course(request, course_id):
     }
     return render(request, 'definitions/view_course.html', context)
 
+
 def export_pdf(request):
     """Produce pdf document showing filtered cards"""
     card_id = request.GET.get('c')
@@ -362,4 +371,3 @@ def export_pdf(request):
                             content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="nerdhelp.pdf"'
     return response
-

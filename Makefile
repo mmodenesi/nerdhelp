@@ -16,7 +16,7 @@ clean:
 	$(COMPOSE) rm -f
 
 dump:
-	$(COMPOSE) exec database mysqldump -unerdhelp -p nerdhelp
+	$(COMPOSE) exec database mysqldump -unerdhelp -pnerdhelp nerdhelp
 
 shell:
 	$(COMPOSE) run --rm web python manage.py shell
