@@ -12,6 +12,7 @@ It's focused on organizing your knowledge on cards, tagging them, then using to 
 ## how to use it
 
 Install docker
+
 Install [fades](https://github.com/PyAr/fades)
 
 - Create the containers with `make build`
