@@ -108,10 +108,10 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.getenv('STATIC_ROOT', '/tmp/static')
+STATIC_ROOT = os.getenv('STATIC_ROOT', os.path.join(BASE_DIR, 'static'))
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.getenv('MEDIA_ROOT', '/tmp/media')
+MEDIA_ROOT = '/app/media'
 
 MATHJAX_ENABLED = True
 MATHJAX_LOCAL_PATH = 'definitions/js/MathJax'
