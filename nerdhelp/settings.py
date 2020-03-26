@@ -136,19 +136,14 @@ MATHJAX_CONFIG_DATA = {
     }
 }
 
-
-CKEDITOR_JQUERY_URL = '/static/definitions/js/jquery.min.js'
-
 CKEDITOR_CONFIGS = {
-
     'default': {
-        'toolbar': None,
-    },
-#    'default': {
-#        'mathJaxLib': '/static/{}/MathJax.js?config={}'.format(
-#            MATHJAX_LOCAL_PATH,
-#            MATHJAX_CONFIG_FILE
-#        ),
-#    }
+        'toolbar': 'Custom',
+            'toolbar_Custom': [
+                ['Bold', 'Italic', 'Underline'],
+                ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+                ['Link', 'Unlink'],
+                ['RemoveFormat', 'Source']
+            ]
+    }
 }
-

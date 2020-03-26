@@ -18,6 +18,7 @@ services:
       - type: volume
         source: nerdhelp_media
         target: /app/media
+      - .:/app
   database:
     image: mysql:5.7
     environment:
