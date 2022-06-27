@@ -19,7 +19,7 @@ Pillow==3.2.0
 pylint==1.4.4
 pyPdf==1.13
 PyPDF2==1.25.1
-reportlab==3.3.0
+reportlab==3.5.55
 simplegeneric==0.8.1
 six==1.10.0
 traitlets==4.0.0
