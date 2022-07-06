@@ -5,7 +5,7 @@ django-ckeditor==5.1.1
 django-mathjax==0.0.5
 django-werkzeug-debugger-runserver==0.3
 djangoajax==2.3.6
-lxml==3.6.4
+lxml==4.9.1
 html5lib==0.9999999
 ipdb==0.8.1
 ipython==4.0.0
